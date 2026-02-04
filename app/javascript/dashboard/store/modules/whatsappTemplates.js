@@ -2,6 +2,7 @@ import WhatsappTemplatesAPI from '../../api/whatsappTemplates';
 
 const state = {
   records: [],
+  channels: [],
   uiFlags: {
     isFetching: false,
     isCreating: false,
@@ -9,6 +10,7 @@ const state = {
     isDeleting: false,
     isSubmitting: false,
     isSyncing: false,
+    isFetchingChannels: false,
   },
   meta: {
     count: 0,
@@ -22,6 +24,7 @@ const state = {
 
 const getters = {
   getTemplates: $state => $state.records,
+  getChannels: $state => $state.channels,
   getUIFlags: $state => $state.uiFlags,
   getMeta: $state => $state.meta,
   getLanguages: $state => $state.languages,
@@ -57,6 +60,9 @@ const mutations = {
   },
   DELETE_TEMPLATE($$state, templateId) {
     $$state.records = $$state.records.filter(t => t.id !== templateId);
+  },
+  SET_CHANNELS($$state, channels) {
+    $$state.channels = channels;
   },
   SET_UI_FLAG($$state, { flag, value }) {
     $$state.uiFlags[flag] = value;
@@ -169,6 +175,19 @@ const actions = {
     }
   },
 
+  async resetToDraft({ commit }, templateId) {
+    commit('SET_UI_FLAG', { flag: 'isUpdating', value: true });
+    try {
+      const response = await WhatsappTemplatesAPI.resetToDraft(templateId);
+      commit('UPDATE_TEMPLATE', response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      commit('SET_UI_FLAG', { flag: 'isUpdating', value: false });
+    }
+  },
+
   async syncAllTemplates({ commit, dispatch }, channelId) {
     commit('SET_UI_FLAG', { flag: 'isSyncing', value: true });
     try {
@@ -199,6 +218,31 @@ const actions = {
       return response.data;
     } catch (error) {
       throw error;
+    }
+  },
+
+  async fetchChannels({ commit }) {
+    commit('SET_UI_FLAG', { flag: 'isFetchingChannels', value: true });
+    try {
+      const response = await WhatsappTemplatesAPI.getChannels();
+      commit('SET_CHANNELS', response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      commit('SET_UI_FLAG', { flag: 'isFetchingChannels', value: false });
+    }
+  },
+
+  async submitToChannels({ commit }, { templateId, channelIds }) {
+    commit('SET_UI_FLAG', { flag: 'isSubmitting', value: true });
+    try {
+      const response = await WhatsappTemplatesAPI.submitToChannels(templateId, channelIds);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      commit('SET_UI_FLAG', { flag: 'isSubmitting', value: false });
     }
   },
 };

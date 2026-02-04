@@ -295,12 +295,15 @@ Rails.application.routes.draw do
             resources :templates, only: [:index, :show, :create, :update, :destroy] do
               member do
                 post :submit
+                post :submit_to_channels
                 post :sync
+                post :reset_to_draft
               end
               collection do
                 post :sync_all
                 get :languages
                 get :sample
+                get :channels
               end
             end
             # Account status tracking for WhatsApp Business accounts

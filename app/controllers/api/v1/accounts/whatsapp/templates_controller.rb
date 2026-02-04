@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::BaseController
-  before_action :set_template, only: [:show, :update, :destroy, :submit, :sync]
+  before_action :set_template, only: [:show, :update, :destroy, :submit, :submit_to_channels, :sync, :reset_to_draft]
   before_action :check_authorization
 
   def index
@@ -63,6 +63,73 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
     end
   end
 
+  # POST /api/v1/accounts/:account_id/whatsapp/templates/:id/submit_to_channels
+  # Submit template to multiple WhatsApp channels
+  def submit_to_channels
+    channel_ids = params[:channel_ids] || []
+    
+    if channel_ids.empty?
+      return render json: { error: 'No channels specified' }, status: :unprocessable_entity
+    end
+
+    channels = Channel::Whatsapp.where(id: channel_ids, account_id: Current.account.id)
+    
+    if channels.empty?
+      return render json: { error: 'No valid channels found' }, status: :not_found
+    end
+
+    results = []
+    channels.each do |channel|
+      # Clone template for each channel if not the primary one
+      if @template.channel_whatsapp_id == channel.id
+        template_to_submit = @template
+      else
+        # Create a copy for this channel
+        template_to_submit = @template.dup
+        template_to_submit.channel_whatsapp_id = channel.id
+        template_to_submit.meta_template_id = nil
+        template_to_submit.status = 'DRAFT'
+        template_to_submit.submitted_at = nil
+        template_to_submit.save!
+      end
+
+      service = Whatsapp::TemplateManagementService.new(template: template_to_submit)
+      result = service.submit_template
+      
+      results << {
+        channel_id: channel.id,
+        channel_name: channel.inbox&.name || channel.phone_number,
+        success: result[:success],
+        error: result[:error],
+        template_id: template_to_submit.id
+      }
+    end
+
+    successful = results.count { |r| r[:success] }
+    failed = results.count { |r| !r[:success] }
+
+    render json: {
+      message: "Submitted to #{successful} channel(s), #{failed} failed",
+      results: results
+    }, status: :ok
+  end
+
+  # GET /api/v1/accounts/:account_id/whatsapp/templates/channels
+  # List all WhatsApp channels for template submission
+  def channels
+    whatsapp_channels = Channel::Whatsapp.joins(:inbox)
+                                         .where(inboxes: { account_id: Current.account.id })
+                                         .select('channel_whatsapp.id, channel_whatsapp.phone_number, inboxes.name as inbox_name')
+
+    render json: whatsapp_channels.map { |c|
+      {
+        id: c.id,
+        phone_number: c.phone_number,
+        name: c.inbox_name
+      }
+    }
+  end
+
   # POST /api/v1/accounts/:account_id/whatsapp/templates/:id/sync
   def sync
     service = Whatsapp::TemplateManagementService.new(template: @template)
@@ -72,6 +139,19 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
       render json: template_response(@template.reload), status: :ok
     else
       render json: { error: result[:error] }, status: :unprocessable_entity
+    end
+  end
+
+  # POST /api/v1/accounts/:account_id/whatsapp/templates/:id/reset_to_draft
+  def reset_to_draft
+    unless @template.resettable_to_draft?
+      return render json: { error: 'Template cannot be reset to draft in current status' }, status: :unprocessable_entity
+    end
+
+    if @template.reset_to_draft!
+      render json: template_response(@template.reload), status: :ok
+    else
+      render json: { error: 'Failed to reset template to draft' }, status: :unprocessable_entity
     end
   end
 
@@ -228,6 +308,8 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
       } : nil,
       meta_template_id: template.meta_template_id,
       channel_whatsapp_id: template.channel_whatsapp_id,
+      channel_name: template.channel_whatsapp&.inbox&.name,
+      channel_phone: template.channel_whatsapp&.phone_number,
       clerk_organization_id: template.clerk_organization_id,
       user_id: template.user_id,
       submitted_at: template.submitted_at,

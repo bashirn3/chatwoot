@@ -44,9 +44,24 @@ class WhatsappTemplatesAPI extends ApiClient {
     return axios.post(`${this.url}/${id}/submit`);
   }
 
+  // Submit template to multiple WhatsApp channels
+  submitToChannels(id, channelIds) {
+    return axios.post(`${this.url}/${id}/submit_to_channels`, { channel_ids: channelIds });
+  }
+
   // Sync template status from Meta
   sync(id) {
     return axios.post(`${this.url}/${id}/sync`);
+  }
+
+  // Reset template to draft status
+  resetToDraft(id) {
+    return axios.post(`${this.url}/${id}/reset_to_draft`);
+  }
+
+  // Get list of WhatsApp channels
+  getChannels() {
+    return axios.get(`${this.url}/channels`);
   }
 
   // Sync all templates from Meta

@@ -15,12 +15,19 @@ const { t } = useI18n();
 const searchQuery = ref('');
 const selectedStatus = ref('');
 const selectedCategory = ref('');
+const selectedChannel = ref('');
 const currentPage = ref(1);
 
 // Computed
 const templates = computed(() => store.getters['whatsappTemplates/getTemplates']);
+const channels = computed(() => store.getters['whatsappTemplates/getChannels'] || []);
 const uiFlags = computed(() => store.getters['whatsappTemplates/getUIFlags']);
 const meta = computed(() => store.getters['whatsappTemplates/getMeta']);
+
+const channelFilters = computed(() => [
+  { value: '', label: 'All Channels' },
+  ...channels.value.map(c => ({ value: c.id.toString(), label: c.name }))
+]);
 
 const statusFilters = [
   { value: '', label: 'All Status' },
@@ -45,10 +52,19 @@ const fetchTemplates = async () => {
       page: currentPage.value,
       status: selectedStatus.value,
       category: selectedCategory.value,
+      channelId: selectedChannel.value,
       search: searchQuery.value,
     });
   } catch (error) {
     console.error('Failed to fetch templates:', error);
+  }
+};
+
+const fetchChannels = async () => {
+  try {
+    await store.dispatch('whatsappTemplates/fetchChannels');
+  } catch (error) {
+    console.error('Failed to fetch channels:', error);
   }
 };
 
@@ -81,6 +97,16 @@ const handleSyncTemplate = async (template) => {
     useAlert(t('WHATSAPP_TEMPLATES.SYNC_SUCCESS'));
   } catch (error) {
     useAlert(error.message || t('WHATSAPP_TEMPLATES.SYNC_ERROR'));
+  }
+};
+
+const handleResetToDraft = async (template) => {
+  try {
+    await store.dispatch('whatsappTemplates/resetToDraft', template.id);
+    useAlert(t('WHATSAPP_TEMPLATES.RESET_TO_DRAFT_SUCCESS'));
+    fetchTemplates();
+  } catch (error) {
+    useAlert(error.response?.data?.error || error.message || t('WHATSAPP_TEMPLATES.RESET_TO_DRAFT_ERROR'));
   }
 };
 
@@ -120,7 +146,7 @@ const getStatusClass = (status) => {
 };
 
 // Watchers
-watch([selectedStatus, selectedCategory, searchQuery], () => {
+watch([selectedStatus, selectedCategory, selectedChannel, searchQuery], () => {
   currentPage.value = 1;
   fetchTemplates();
 });
@@ -128,7 +154,10 @@ watch([selectedStatus, selectedCategory, searchQuery], () => {
 watch(currentPage, fetchTemplates);
 
 // Lifecycle
-onMounted(fetchTemplates);
+onMounted(() => {
+  fetchTemplates();
+  fetchChannels();
+});
 </script>
 
 <template>
@@ -212,6 +241,21 @@ onMounted(fetchTemplates);
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
       </div>
+      
+      <div v-if="channels.length > 1" class="relative">
+        <select 
+          v-model="selectedChannel" 
+          class="h-10 px-4 pr-10 border border-slate-200 rounded-lg text-sm bg-white min-w-[150px] cursor-pointer focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+          style="appearance: none; -webkit-appearance: none; -moz-appearance: none;"
+        >
+          <option v-for="f in channelFilters" :key="f.value" :value="f.value">
+            {{ f.label }}
+          </option>
+        </select>
+        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -258,12 +302,13 @@ onMounted(fetchTemplates);
             </span>
           </div>
           <span 
-            v-if="template.quality_score" 
+            v-if="template.quality_score && !['UNKNOWN', 'NONE', ''].includes(template.quality_score)" 
             :class="[
               'text-xs px-2 py-0.5 rounded',
               template.quality_score === 'GREEN' ? 'bg-green-100 text-green-700' :
               template.quality_score === 'YELLOW' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-red-100 text-red-700'
+              template.quality_score === 'RED' ? 'bg-red-100 text-red-700' :
+              'bg-slate-100 text-slate-700'
             ]"
           >
             {{ template.quality_score }}
@@ -272,14 +317,19 @@ onMounted(fetchTemplates);
         
         <div class="mb-3">
           <h3 class="font-medium font-mono text-sm mb-1">{{ template.name }}</h3>
-          <p class="text-xs text-slate-500 mb-2">{{ template.language_name }}</p>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs text-slate-500">{{ template.language_name }}</span>
+            <span v-if="template.channel_name" class="text-xs px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
+              {{ template.channel_name }}
+            </span>
+          </div>
           <p class="text-sm text-slate-700 line-clamp-3">
             {{ template.body_text }}
           </p>
         </div>
         
         <div 
-          v-if="template.rejection_reason" 
+          v-if="template.rejection_reason && !['NONE', 'none', ''].includes(template.rejection_reason)" 
           class="flex items-start gap-2 p-2 bg-red-50 rounded mb-3 text-xs text-red-800"
         >
           <span class="i-lucide-alert-triangle w-4 h-4 flex-shrink-0" />
@@ -301,6 +351,16 @@ onMounted(fetchTemplates);
               xs
               :is-loading="uiFlags.isSubmitting"
               @click="handleSubmitTemplate(template)"
+            />
+            
+            <Button
+              v-if="['PENDING', 'REJECTED', 'PAUSED'].includes(template.status)"
+              :label="$t('WHATSAPP_TEMPLATES.RESET_TO_DRAFT')"
+              xs
+              slate
+              faded
+              :is-loading="uiFlags.isUpdating"
+              @click="handleResetToDraft(template)"
             />
             
             <Button

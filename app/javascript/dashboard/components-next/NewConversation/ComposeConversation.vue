@@ -248,7 +248,7 @@ useKeyboardEvents(keyboardEvents);
     ]"
     class="relative"
     :class="{
-      'z-50': showComposeNewConversation && !viewInModal,
+      'z-[100]': showComposeNewConversation && !viewInModal,
     }"
   >
     <slot

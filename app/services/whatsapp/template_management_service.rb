@@ -257,6 +257,10 @@ class Whatsapp::TemplateManagementService
   end
 
   def map_meta_status(meta_status)
+    self.class.map_meta_status(meta_status)
+  end
+
+  def self.map_meta_status(meta_status)
     case meta_status&.upcase
     when 'APPROVED'
       'APPROVED'
@@ -285,7 +289,7 @@ class Whatsapp::TemplateManagementService
         # Update existing template
         existing.update!(
           meta_template_id: meta_template['id'],
-          status: new.send(:map_meta_status, meta_template['status']),
+          status: map_meta_status(meta_template['status']),
           quality_score: meta_template['quality_score']&.dig('score'),
           rejection_reason: meta_template['rejected_reason'],
           last_synced_at: Time.current,
@@ -313,7 +317,7 @@ class Whatsapp::TemplateManagementService
       language: meta_template['language'],
       category: meta_template['category'],
       meta_template_id: meta_template['id'],
-      status: new.send(:map_meta_status, meta_template['status']),
+      status: map_meta_status(meta_template['status']),
       quality_score: meta_template['quality_score']&.dig('score'),
       rejection_reason: meta_template['rejected_reason'],
       header_type: header&.dig('format'),

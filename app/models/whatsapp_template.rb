@@ -135,7 +135,24 @@ class WhatsappTemplate < ApplicationRecord
 
   # Check if template can be edited
   def editable?
-    status_draft? || status_rejected?
+    status_draft? || status_rejected? || status_pending?
+  end
+
+  # Check if template can be reset to draft
+  def resettable_to_draft?
+    status_pending? || status_rejected? || status_paused?
+  end
+
+  # Reset template to draft status for re-editing
+  def reset_to_draft!
+    return false unless resettable_to_draft?
+
+    update!(
+      status: 'DRAFT',
+      meta_template_id: nil,
+      submitted_at: nil,
+      rejection_reason: nil
+    )
   end
 
   # Get variable count in body
@@ -152,12 +169,19 @@ class WhatsappTemplate < ApplicationRecord
 
   # Build Meta API payload for template submission
   def to_meta_payload
-    {
+    payload = {
       name: name,
       language: language,
       category: category.upcase,
       components: build_components
     }
+
+    # Authentication templates require additional fields
+    if category_authentication?
+      payload[:message_send_ttl_seconds] = 600 # 10 minute expiry
+    end
+
+    payload
   end
 
   # Build components array for Meta API
@@ -296,16 +320,25 @@ class WhatsappTemplate < ApplicationRecord
   end
 
   def build_body_component
-    component = {
-      type: 'BODY',
-      text: body_text
-    }
+    # For AUTHENTICATION templates, Meta auto-generates body text
+    # We only need to provide add_security_recommendation flag
+    if category_authentication?
+      {
+        type: 'BODY',
+        add_security_recommendation: true
+      }
+    else
+      component = {
+        type: 'BODY',
+        text: body_text
+      }
 
-    if body_params.present? && body_params.any?
-      component[:example] = { body_text: [body_params.map { |p| p['example'] }] }
+      if body_params.present? && body_params.any?
+        component[:example] = { body_text: [body_params.map { |p| p['example'] }] }
+      end
+
+      component
     end
-
-    component
   end
 
   def build_footer_component
@@ -328,12 +361,16 @@ class WhatsappTemplate < ApplicationRecord
       { type: 'QUICK_REPLY', text: btn['text'] }
     when 'URL'
       button = { type: 'URL', text: btn['text'], url: btn['url'] }
-      button[:example] = [btn['url_example']] if btn['url'].include?('{{1}}') && btn['url_example'].present?
+      button[:example] = [btn['url_example']] if btn['url']&.include?('{{1}}') && btn['url_example'].present?
       button
     when 'PHONE_NUMBER'
       { type: 'PHONE_NUMBER', text: btn['text'], phone_number: btn['phone_number'] }
     when 'COPY_CODE'
-      { type: 'COPY_CODE', example: btn['example'] || 'EXAMPLECODE' }
+      # For authentication templates, OTP button with copy code
+      { type: 'OTP', otp_type: 'COPY_CODE', text: btn['text'] || 'Copy code' }
+    when 'OTP'
+      # Generic OTP button
+      { type: 'OTP', otp_type: btn['otp_type'] || 'COPY_CODE', text: btn['text'] || 'Copy code' }
     end
   end
 
