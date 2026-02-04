@@ -1,0 +1,78 @@
+{
+  "WHATSAPP_ACCOUNT_STATUS": {
+    "TITLE": "WhatsApp Account Health",
+    "DESCRIPTION": "Monitor the status and health of your WhatsApp Business accounts.",
+    "LOADING": "Loading account status...",
+    "NO_CHANNELS": "No WhatsApp channels configured",
+    "NO_CHANNELS_DESCRIPTION": "Add a WhatsApp inbox to monitor account status.",
+    "SYNC": "Sync Status",
+    "SYNC_SUCCESS": "Status sync initiated",
+    "SYNC_ERROR": "Failed to sync status",
+    "LAST_SYNCED": "Last synced",
+    "NEVER_SYNCED": "Never synced",
+    "VIEW_DETAILS": "View Details",
+    "VIEW_EVENTS": "View History",
+    "SUMMARY": {
+      "TOTAL": "Total Channels",
+      "ACTIVE": "Active",
+      "WITH_ISSUES": "With Issues",
+      "LOW_QUALITY": "Low Quality"
+    },
+    "STATUS": {
+      "ACTIVE": "Active",
+      "RESTRICTED": "Restricted",
+      "BANNED": "Banned",
+      "FLAGGED": "Flagged",
+      "PENDING_DELETION": "Pending Deletion",
+      "DISABLED": "Disabled",
+      "UNKNOWN": "Unknown"
+    },
+    "QUALITY": {
+      "GREEN": "High",
+      "YELLOW": "Medium",
+      "RED": "Low",
+      "UNKNOWN": "Unknown"
+    },
+    "ALERTS": {
+      "TITLE": "Alerts",
+      "NO_ALERTS": "All accounts healthy",
+      "BANNED_MESSAGE": "This account has been banned by Meta. Please review Meta's policies.",
+      "RESTRICTED_MESSAGE": "This account has restrictions. Some features may be limited.",
+      "FLAGGED_MESSAGE": "This account has been flagged for review.",
+      "LOW_QUALITY_MESSAGE": "Quality rating is low. Consider improving your messaging practices."
+    },
+    "EVENTS": {
+      "TITLE": "Status History",
+      "NO_EVENTS": "No status events recorded",
+      "TYPE": {
+        "STATUS_CHANGE": "Status Change",
+        "QUALITY_CHANGE": "Quality Change",
+        "VIOLATION": "Policy Violation",
+        "RESTRICTION": "Restriction",
+        "MESSAGING_LIMIT_CHANGE": "Messaging Limit Change",
+        "THROUGHPUT_CHANGE": "Throughput Change",
+        "VERIFICATION_CHANGE": "Verification Change",
+        "DISPLAY_NAME_CHANGE": "Display Name Change",
+        "ACCOUNT_REVIEW_CHANGE": "Account Review Change"
+      },
+      "SOURCE": {
+        "API_SYNC": "API Sync",
+        "WEBHOOK": "Webhook",
+        "MANUAL": "Manual"
+      }
+    },
+    "DETAILS": {
+      "ACCOUNT_STATUS": "Account Status",
+      "QUALITY_RATING": "Quality Rating",
+      "MESSAGING_LIMIT": "Messaging Limit",
+      "THROUGHPUT": "Throughput",
+      "BUSINESS_VERIFICATION": "Business Verification",
+      "DISPLAY_NAME_STATUS": "Display Name Status",
+      "ACCOUNT_REVIEW": "Account Review",
+      "PHONE_NUMBER": "Phone Number",
+      "PROVIDER": "Provider",
+      "VIOLATIONS": "Policy Violations",
+      "RESTRICTIONS": "Active Restrictions"
+    }
+  }
+}
