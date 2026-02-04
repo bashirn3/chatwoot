@@ -204,7 +204,9 @@ class Channel::Whatsapp < ApplicationRecord
     perform_webhook_setup
   rescue StandardError => e
     Rails.logger.error "[WHATSAPP] Webhook setup failed: #{e.message}"
-    prompt_reauthorization!
+    # Don't mark newly created channels as "connection expired" when webhook setup fails
+    # (e.g. permissions, wrong WABA ID). They can still send messages; inbound may need reconnect later.
+    prompt_reauthorization! unless created_at > 2.minutes.ago
   end
 
   private

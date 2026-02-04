@@ -297,7 +297,7 @@ onMounted(fetchTemplates);
           <div class="flex gap-1" @click.stop>
             <Button
               v-if="template.status === 'DRAFT'"
-              label="Submit"
+              :label="$t('WHATSAPP_TEMPLATES.SUBMIT_FOR_APPROVAL')"
               xs
               :is-loading="uiFlags.isSubmitting"
               @click="handleSubmitTemplate(template)"
