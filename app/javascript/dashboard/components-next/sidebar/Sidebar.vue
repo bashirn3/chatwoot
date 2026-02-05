@@ -597,6 +597,18 @@ const menuItems = computed(() => {
           to: accountScopedRoute('settings_inbox_list'),
         },
         {
+          name: 'Settings WhatsApp Templates',
+          label: t('SIDEBAR.WHATSAPP_TEMPLATES'),
+          icon: 'i-lucide-file-text',
+          to: accountScopedRoute('settings_whatsapp_templates'),
+        },
+        {
+          name: 'Settings WhatsApp Account Status',
+          label: t('SIDEBAR.WHATSAPP_ACCOUNT_STATUS'),
+          icon: 'i-lucide-activity',
+          to: accountScopedRoute('settings_whatsapp_account_status'),
+        },
+        {
           name: 'Settings Labels',
           label: t('SIDEBAR.LABELS'),
           icon: 'i-lucide-tags',
