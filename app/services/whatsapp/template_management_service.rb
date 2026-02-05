@@ -83,11 +83,20 @@ class Whatsapp::TemplateManagementService
 
   # Delete template from Meta
   def delete_template
-    return success_response('Template deleted locally', template) if template.meta_template_id.blank?
-    return error_response('No WhatsApp channel configured') unless channel
+    # If no meta_template_id or no channel, just delete locally
+    if template.meta_template_id.blank? || channel.blank?
+      template.destroy!
+      return success_response('Template deleted locally')
+    end
 
     waba_id = channel.provider_config['business_account_id']
     access_token = channel.provider_config['api_key']
+
+    # If no credentials, delete locally
+    if waba_id.blank? || access_token.blank?
+      template.destroy!
+      return success_response('Template deleted locally')
+    end
 
     begin
       response = make_api_request(
@@ -101,17 +110,15 @@ class Whatsapp::TemplateManagementService
         template.destroy!
         success_response('Template deleted successfully')
       else
-        # If template doesn't exist on Meta, still delete locally
-        if response[:error]&.dig('code') == 100
-          template.destroy!
-          success_response('Template deleted locally (not found on Meta)')
-        else
-          error_response('Failed to delete template', response[:error])
-        end
+        # If template doesn't exist on Meta or any error, still delete locally
+        template.destroy!
+        success_response('Template deleted locally')
       end
     rescue StandardError => e
       Rails.logger.error("[WhatsApp Template] Delete error: #{e.message}")
-      error_response("Failed to delete template: #{e.message}")
+      # Still try to delete locally on error
+      template.destroy!
+      success_response('Template deleted locally')
     end
   end
 

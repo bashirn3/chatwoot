@@ -40,17 +40,27 @@ class Whatsapp::AccountStatusSyncService
 
   def sync_waba_status
     response = fetch_waba_data
-    return unless response.success?
+    
+    Rails.logger.info "[WHATSAPP SYNC] WABA Response for channel #{@whatsapp_channel.id}: #{response.code} - #{response.body}"
+    
+    unless response.success?
+      Rails.logger.error "[WHATSAPP SYNC] WABA fetch failed: #{response.code} - #{response.body}"
+      return
+    end
 
     data = response.parsed_response
+    Rails.logger.info "[WHATSAPP SYNC] WABA data parsed: #{data.inspect}"
 
-    # Update account status
-    if data['account_status'].present?
-      @whatsapp_channel.update_status(data['account_status'], source: 'API_SYNC')
+    # Update account status - Meta returns this in different formats
+    account_status = data['account_status'] || data['status']
+    if account_status.present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating account status to: #{account_status}"
+      @whatsapp_channel.update_status(account_status.upcase, source: 'API_SYNC')
     end
 
     # Update business verification status
     if data['business_verification_status'].present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating business_verification_status to: #{data['business_verification_status']}"
       update_field_with_event(
         field: :business_verification_status,
         new_value: data['business_verification_status'],
@@ -60,11 +70,17 @@ class Whatsapp::AccountStatusSyncService
 
     # Update account review status
     if data['account_review_status'].present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating account_review_status to: #{data['account_review_status']}"
       update_field_with_event(
         field: :account_review_status,
         new_value: data['account_review_status'],
         event_type: 'ACCOUNT_REVIEW_CHANGE'
       )
+    end
+
+    # Check for message_template_namespace (indicates if account can send templates)
+    if data['message_template_namespace'].present?
+      Rails.logger.info "[WHATSAPP SYNC] Account has template namespace: #{data['message_template_namespace']}"
     end
 
     # Store any violation or restriction info
@@ -83,18 +99,35 @@ class Whatsapp::AccountStatusSyncService
     return unless phone_number_id.present?
 
     response = fetch_phone_number_data
-    return unless response.success?
+    
+    Rails.logger.info "[WHATSAPP SYNC] Phone number response for channel #{@whatsapp_channel.id}: #{response.code} - #{response.body}"
+    
+    unless response.success?
+      Rails.logger.error "[WHATSAPP SYNC] Phone number fetch failed: #{response.code} - #{response.body}"
+      return
+    end
 
     data = response.parsed_response
+    Rails.logger.info "[WHATSAPP SYNC] Phone number data parsed: #{data.inspect}"
 
-    # Update quality rating
-    if data['quality_score']
-      quality = data['quality_score']['score'] || data['quality_score']
-      @whatsapp_channel.update_quality_rating(quality, source: 'API_SYNC')
+    # Update quality rating - can be nested or flat
+    quality = nil
+    if data['quality_score'].is_a?(Hash)
+      quality = data['quality_score']['score']
+    elsif data['quality_score'].is_a?(String)
+      quality = data['quality_score']
+    elsif data['quality_rating'].present?
+      quality = data['quality_rating']
+    end
+    
+    if quality.present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating quality rating to: #{quality}"
+      @whatsapp_channel.update_quality_rating(quality.upcase, source: 'API_SYNC')
     end
 
     # Update messaging limits
     if data['messaging_limit_tier'].present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating messaging_limit_tier to: #{data['messaging_limit_tier']}"
       update_field_with_event(
         field: :messaging_limit_tier,
         new_value: data['messaging_limit_tier'],
@@ -102,9 +135,16 @@ class Whatsapp::AccountStatusSyncService
       )
     end
 
-    # Update throughput
-    if data['throughput'].present?
+    # Update throughput - can be nested or flat
+    throughput = nil
+    if data['throughput'].is_a?(Hash)
       throughput = data['throughput']['level']
+    elsif data['throughput'].present?
+      throughput = data['throughput']
+    end
+    
+    if throughput.present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating throughput to: #{throughput}"
       update_field_with_event(
         field: :current_throughput,
         new_value: throughput.to_s,
@@ -114,6 +154,7 @@ class Whatsapp::AccountStatusSyncService
 
     # Update display name status
     if data['display_name_status'].present?
+      Rails.logger.info "[WHATSAPP SYNC] Updating display_name_status to: #{data['display_name_status']}"
       update_field_with_event(
         field: :display_name_status,
         new_value: data['display_name_status'],
@@ -121,15 +162,42 @@ class Whatsapp::AccountStatusSyncService
       )
     end
 
-    # Update status from phone number level
-    if data['status'].present? && data['status'] != @whatsapp_channel.account_status
-      @whatsapp_channel.update_status(data['status'], source: 'API_SYNC')
+    # Update status from phone number level - this often shows BANNED/RESTRICTED at phone level
+    phone_status = data['status'] || data['account_mode']
+    if phone_status.present?
+      normalized_status = normalize_phone_status(phone_status)
+      if normalized_status && normalized_status != @whatsapp_channel.account_status
+        Rails.logger.info "[WHATSAPP SYNC] Updating status from phone number to: #{normalized_status}"
+        @whatsapp_channel.update_status(normalized_status, source: 'API_SYNC')
+      end
     end
+    
+    # Check for is_official_business_account flag
+    if data.key?('is_official_business_account')
+      Rails.logger.info "[WHATSAPP SYNC] is_official_business_account: #{data['is_official_business_account']}"
+    end
+  end
+  
+  def normalize_phone_status(status)
+    # Meta returns various status values, normalize to our known statuses
+    status_mapping = {
+      'CONNECTED' => 'ACTIVE',
+      'DISCONNECTED' => 'DISABLED',
+      'BANNED' => 'BANNED',
+      'FLAGGED' => 'FLAGGED',
+      'RESTRICTED' => 'RESTRICTED',
+      'PENDING' => 'ACTIVE',
+      'ACTIVE' => 'ACTIVE',
+      'DISABLED' => 'DISABLED',
+      'PENDING_DELETION' => 'PENDING_DELETION'
+    }
+    status_mapping[status.upcase] || status.upcase
   end
 
   def fetch_waba_data
     url = "#{base_url}/#{business_account_id}"
-    fields = 'id,name,account_status,business_verification_status,account_review_status'
+    # Request all available status fields from WABA
+    fields = 'id,name,account_status,business_verification_status,account_review_status,message_template_namespace,on_behalf_of_business_info,ownership_type,primary_funding_id,timezone_id'
     
     HTTParty.get(
       url,
@@ -140,7 +208,8 @@ class Whatsapp::AccountStatusSyncService
 
   def fetch_phone_number_data
     url = "#{base_url}/#{phone_number_id}"
-    fields = 'id,display_phone_number,verified_name,quality_score,messaging_limit_tier,throughput,status,display_name_status'
+    # Request all available status fields from phone number endpoint
+    fields = 'id,display_phone_number,verified_name,quality_score,quality_rating,messaging_limit_tier,throughput,status,display_name_status,code_verification_status,is_official_business_account,account_mode,platform_type,name_status'
     
     HTTParty.get(
       url,

@@ -49,13 +49,16 @@ const handleSubmit = async (templateData) => {
     
     const created = await store.dispatch('whatsappTemplates/createTemplate', templateData);
     
+    // Redirect immediately after creation
+    useAlert(t('WHATSAPP_TEMPLATES.CREATE_SUCCESS'));
+    router.push({ name: 'settings_whatsapp_templates' });
+    
+    // Submit to channels in background (non-blocking)
     if (submitForApprovalImmediately.value && created?.id && selectedChannels.value.length > 0) {
-      try {
-        const result = await store.dispatch('whatsappTemplates/submitToChannels', {
-          templateId: created.id,
-          channelIds: selectedChannels.value
-        });
-        
+      store.dispatch('whatsappTemplates/submitToChannels', {
+        templateId: created.id,
+        channelIds: selectedChannels.value
+      }).then(result => {
         const successCount = result.results?.filter(r => r.success).length || 0;
         const failCount = result.results?.filter(r => !r.success).length || 0;
         
@@ -64,14 +67,12 @@ const handleSubmit = async (templateData) => {
         } else {
           useAlert(t('WHATSAPP_TEMPLATES.SUBMIT_TO_CHANNELS_PARTIAL', { success: successCount, failed: failCount }));
         }
-      } catch (submitError) {
-        useAlert(t('WHATSAPP_TEMPLATES.CREATE_SUCCESS'));
+        // Refresh templates list
+        store.dispatch('whatsappTemplates/fetchTemplates');
+      }).catch(submitError => {
         useAlert(submitError.response?.data?.error || submitError.message || t('WHATSAPP_TEMPLATES.SUBMIT_ERROR'));
-      }
-    } else {
-      useAlert(t('WHATSAPP_TEMPLATES.CREATE_SUCCESS'));
+      });
     }
-    router.push({ name: 'settings_whatsapp_templates' });
   } catch (error) {
     const errorMessage = error.response?.data?.errors?.join(', ') || error.message;
     useAlert(errorMessage || t('WHATSAPP_TEMPLATES.CREATE_ERROR'));

@@ -5,17 +5,14 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
   # GET /api/v1/accounts/:account_id/whatsapp/account_status
   # Returns status for all WhatsApp channels in the account
   def index
-    channels = Current.account.inboxes
-                      .joins(:channel)
-                      .where(channel_type: 'Channel::Whatsapp')
-                      .map(&:channel)
+    channels = fetch_whatsapp_channels
 
     render json: {
       channels: channels.map { |channel| channel_status_json(channel) },
       summary: {
         total: channels.count,
-        active: channels.count(&:active?),
-        with_issues: channels.count(&:has_issues?),
+        active: channels.count { |c| c.active? },
+        with_issues: channels.count { |c| c.has_issues? },
         low_quality: channels.count { |c| c.quality_rating.in?(%w[YELLOW RED]) }
       }
     }
@@ -58,11 +55,7 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
   # GET /api/v1/accounts/:account_id/whatsapp/account_status/alerts
   # Returns channels that need attention
   def alerts
-    channels_with_issues = Current.account.inboxes
-                                  .joins(:channel)
-                                  .where(channel_type: 'Channel::Whatsapp')
-                                  .map(&:channel)
-                                  .select(&:needs_attention?)
+    channels_with_issues = fetch_whatsapp_channels.select { |c| c.needs_attention? }
 
     render json: {
       alerts: channels_with_issues.map do |channel|
@@ -84,6 +77,16 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
     authorize :account, :manage_whatsapp_templates?
   end
 
+  def fetch_whatsapp_channels
+    # Get WhatsApp channel IDs from inboxes
+    channel_ids = Current.account.inboxes
+                         .where(channel_type: 'Channel::Whatsapp')
+                         .pluck(:channel_id)
+    
+    # Fetch the actual channels
+    Channel::Whatsapp.where(id: channel_ids)
+  end
+
   def set_channel
     inbox = Current.account.inboxes.find(params[:inbox_id])
     @channel = inbox.channel
@@ -94,14 +97,18 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
   end
 
   def channel_status_json(channel)
+    inbox = channel.inbox
+    messages_stats = calculate_message_stats(inbox)
+
     {
-      inbox_id: channel.inbox&.id,
-      inbox_name: channel.inbox&.name,
+      inbox_id: inbox&.id,
+      inbox_name: inbox&.name,
       phone_number: channel.phone_number,
       provider: channel.provider,
       account_status: channel.account_status,
       quality_rating: channel.quality_rating,
       messaging_limit_tier: channel.messaging_limit_tier,
+      messaging_limit_number: messaging_limit_number(channel.messaging_limit_tier),
       current_throughput: channel.current_throughput,
       business_verification_status: channel.business_verification_status,
       display_name_status: channel.display_name_status,
@@ -110,8 +117,40 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
       restrictions: channel.restrictions,
       last_synced_at: channel.account_status_last_synced_at,
       needs_attention: channel.needs_attention?,
-      has_issues: channel.has_issues?
+      has_issues: channel.has_issues?,
+      messages_sent_today: messages_stats[:today],
+      messages_sent_24h: messages_stats[:last_24h],
+      messages_sent_total: messages_stats[:total]
     }
+  end
+
+  def calculate_message_stats(inbox)
+    return { today: 0, last_24h: 0, total: 0 } unless inbox
+
+    # Count outgoing messages (message_type = 1 means outgoing)
+    messages = Message.joins(:conversation)
+                      .where(conversations: { inbox_id: inbox.id })
+                      .where(message_type: 1)
+
+    {
+      today: messages.where('messages.created_at >= ?', Time.current.beginning_of_day).count,
+      last_24h: messages.where('messages.created_at >= ?', 24.hours.ago).count,
+      total: messages.count
+    }
+  end
+
+  def messaging_limit_number(tier)
+    return nil unless tier
+
+    limits = {
+      'TIER_50' => 50,
+      'TIER_250' => 250,
+      'TIER_1K' => 1000,
+      'TIER_10K' => 10_000,
+      'TIER_100K' => 100_000,
+      'UNLIMITED' => nil
+    }
+    limits[tier]
   end
 
   def event_json(event)

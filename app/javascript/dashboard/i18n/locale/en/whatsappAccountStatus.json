@@ -8,6 +8,7 @@
     "SYNC": "Sync Status",
     "SYNC_SUCCESS": "Status sync initiated",
     "SYNC_ERROR": "Failed to sync status",
+    "SYNC_HINT": "Click 'Sync Status' to fetch the latest metrics from Meta. Some data may take a few minutes to appear after syncing.",
     "LAST_SYNCED": "Last synced",
     "NEVER_SYNCED": "Never synced",
     "VIEW_DETAILS": "View Details",

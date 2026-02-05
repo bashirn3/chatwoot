@@ -65,6 +65,33 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleString();
 };
 
+const formatTier = (tier, limitNumber) => {
+  if (!tier && !limitNumber) return 'Standard (250/day)';
+  
+  // If we have the actual number, use it
+  if (limitNumber) {
+    if (limitNumber >= 100000) return 'Unlimited';
+    return `${limitNumber.toLocaleString()}/day`;
+  }
+  
+  // Otherwise use tier mapping
+  const tierNames = {
+    'TIER_50': '50/day',
+    'TIER_250': '250/day',
+    'TIER_1K': '1,000/day',
+    'TIER_10K': '10,000/day',
+    'TIER_100K': '100,000/day',
+    'TIER_UNLIMITED': 'Unlimited',
+    'UNLIMITED': 'Unlimited',
+  };
+  return tierNames[tier] || tier || 'Standard (250/day)';
+};
+
+const formatMessageCount = (count) => {
+  if (count === undefined || count === null) return '0';
+  return count.toLocaleString();
+};
+
 // Lifecycle
 onMounted(fetchData);
 </script>
@@ -174,6 +201,45 @@ onMounted(fetchData);
           channel.needs_attention ? 'border-red-200 bg-red-50/30' : 'border-slate-200'
         ]"
       >
+        <!-- BANNED Banner -->
+        <div v-if="channel.account_status === 'BANNED'" class="mb-4 p-4 bg-red-100 border-2 border-red-500 rounded-lg">
+          <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+            <div>
+              <h4 class="font-bold text-red-800 text-lg">Account Banned</h4>
+              <p class="text-sm text-red-700">This WhatsApp Business Account has been banned by Meta. Please review Meta's policies and submit an appeal through the Meta Business Help Center.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- RESTRICTED Banner -->
+        <div v-else-if="channel.account_status === 'RESTRICTED'" class="mb-4 p-4 bg-orange-100 border-2 border-orange-500 rounded-lg">
+          <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div>
+              <h4 class="font-bold text-orange-800 text-lg">Account Restricted</h4>
+              <p class="text-sm text-orange-700">This account has restrictions applied. Some features may be limited. Check Meta Business Suite for details.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- FLAGGED Banner -->
+        <div v-else-if="channel.account_status === 'FLAGGED'" class="mb-4 p-4 bg-yellow-100 border-2 border-yellow-500 rounded-lg">
+          <div class="flex items-center gap-3">
+            <svg class="w-8 h-8 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
+            </svg>
+            <div>
+              <h4 class="font-bold text-yellow-800 text-lg">Account Flagged</h4>
+              <p class="text-sm text-yellow-700">This account is under review by Meta. Continue following best practices to maintain good standing.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-between items-start mb-4">
           <div>
             <h3 class="font-semibold text-lg">{{ channel.inbox_name }}</h3>
@@ -181,7 +247,7 @@ onMounted(fetchData);
           </div>
           <div class="flex gap-2">
             <span :class="['px-3 py-1 rounded-full text-xs font-semibold uppercase', getStatusColor(channel.account_status)]">
-              {{ channel.account_status || 'UNKNOWN' }}
+              {{ channel.account_status || 'ACTIVE' }}
             </span>
             <span 
               v-if="channel.quality_rating"
@@ -192,23 +258,38 @@ onMounted(fetchData);
           </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
           <div>
             <p class="text-xs text-slate-500 uppercase">{{ $t('WHATSAPP_ACCOUNT_STATUS.DETAILS.MESSAGING_LIMIT') }}</p>
-            <p class="font-medium">{{ channel.messaging_limit_tier || 'N/A' }}</p>
+            <p class="font-medium">{{ formatTier(channel.messaging_limit_tier, channel.messaging_limit_number) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 uppercase">Messages Sent (24h)</p>
+            <p class="font-medium text-lg">{{ formatMessageCount(channel.messages_sent_24h) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 uppercase">Messages Sent (Total)</p>
+            <p class="font-medium">{{ formatMessageCount(channel.messages_sent_total) }}</p>
           </div>
           <div>
             <p class="text-xs text-slate-500 uppercase">{{ $t('WHATSAPP_ACCOUNT_STATUS.DETAILS.THROUGHPUT') }}</p>
-            <p class="font-medium">{{ channel.current_throughput ? `${channel.current_throughput} mps` : 'N/A' }}</p>
+            <p class="font-medium">{{ channel.current_throughput ? `${channel.current_throughput} mps` : 'Standard' }}</p>
           </div>
           <div>
             <p class="text-xs text-slate-500 uppercase">{{ $t('WHATSAPP_ACCOUNT_STATUS.DETAILS.BUSINESS_VERIFICATION') }}</p>
-            <p class="font-medium">{{ channel.business_verification_status || 'N/A' }}</p>
+            <p class="font-medium">{{ channel.business_verification_status || 'Pending' }}</p>
           </div>
           <div>
             <p class="text-xs text-slate-500 uppercase">{{ $t('WHATSAPP_ACCOUNT_STATUS.LAST_SYNCED') }}</p>
             <p class="font-medium text-sm">{{ formatDate(channel.last_synced_at) }}</p>
           </div>
+        </div>
+        
+        <!-- Sync hint -->
+        <div v-if="!channel.last_synced_at" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800">
+            {{ $t('WHATSAPP_ACCOUNT_STATUS.SYNC_HINT') }}
+          </p>
         </div>
 
         <!-- Violations/Restrictions -->
