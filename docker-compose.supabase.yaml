@@ -1,0 +1,92 @@
+#=============================================================================
+# WaSup (Modified Chatwoot) with Supabase + Clerk Integration
+#
+# This compose file builds from your local source code and uses:
+# - Supabase for PostgreSQL (external, no local postgres container)
+# - Redis for caching and Sidekiq (local)
+# - Optional Clerk integration for authentication
+#
+# Usage:
+#   docker compose -f docker-compose.supabase.yaml build
+#   docker compose -f docker-compose.supabase.yaml up -d
+#=============================================================================
+
+services:
+  # Base configuration shared by rails and sidekiq
+  base: &base
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        BUNDLE_WITHOUT: 'development:test'
+        RAILS_ENV: production
+        RAILS_SERVE_STATIC_FILES: 'true'
+    image: wasup-supabase:production
+    env_file: .env
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Rails web server
+  rails:
+    <<: *base
+    ports:
+      - '127.0.0.1:3000:3000'
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    entrypoint: docker/entrypoints/rails.sh
+    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+    restart: always
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Sidekiq background job processor
+  sidekiq:
+    <<: *base
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'ps aux | grep -v grep | grep sidekiq || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis for caching and Sidekiq
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ['sh', '-c', 'redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes']
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    ports:
+      - '127.0.0.1:6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  storage_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge

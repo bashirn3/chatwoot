@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Template Status Update</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .status-approved {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status-rejected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .status-paused {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .template-info {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .template-info h3 {
+      margin-top: 0;
+      color: #495057;
+    }
+    .info-row {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .info-label {
+      font-weight: 600;
+      width: 120px;
+      color: #6c757d;
+    }
+    .info-value {
+      flex: 1;
+    }
+    .rejection-reason {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .cta-button {
+      display: inline-block;
+      background-color: #007bff;
+      color: #ffffff !important;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+    .cta-button:hover {
+      background-color: #0056b3;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>WhatsApp Template Update</h1>
+      <% case @event_type %>
+      <% when 'approved' %>
+        <span class="status-badge status-approved">✅ Approved</span>
+      <% when 'rejected' %>
+        <span class="status-badge status-rejected">❌ Rejected</span>
+      <% when 'paused' %>
+        <span class="status-badge status-paused">⚠️ Paused</span>
+      <% end %>
+    </div>
+
+    <p>Hi <%= @user.name %>,</p>
+
+    <% case @event_type %>
+    <% when 'approved' %>
+      <p>Great news! Your WhatsApp message template has been <strong>approved</strong> by Meta and is now ready to use for sending messages to your customers.</p>
+    <% when 'rejected' %>
+      <p>Unfortunately, your WhatsApp message template has been <strong>rejected</strong> by Meta. Please review the rejection reason below and make the necessary changes.</p>
+    <% when 'paused' %>
+      <p>Your WhatsApp message template has been <strong>paused</strong> by Meta. This usually happens due to quality issues or policy violations. Please review and take appropriate action.</p>
+    <% end %>
+
+    <div class="template-info">
+      <h3>Template Details</h3>
+      <div class="info-row">
+        <span class="info-label">Name:</span>
+        <span class="info-value"><%= @template.name %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Category:</span>
+        <span class="info-value"><%= @template.category %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Language:</span>
+        <span class="info-value"><%= WhatsappTemplate::SUPPORTED_LANGUAGES[@template.language] || @template.language %></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Status:</span>
+        <span class="info-value"><%= @template.status %></span>
+      </div>
+      <% if @template.quality_score.present? %>
+      <div class="info-row">
+        <span class="info-label">Quality:</span>
+        <span class="info-value"><%= @template.quality_score %></span>
+      </div>
+      <% end %>
+    </div>
+
+    <% if @event_type == 'rejected' && @template.rejection_reason.present? %>
+    <div class="rejection-reason">
+      <strong>Rejection Reason:</strong><br>
+      <%= @template.rejection_reason %>
+    </div>
+    <% end %>
+
+    <div style="text-align: center;">
+      <a href="<%= @action_url %>" class="cta-button">View Templates</a>
+    </div>
+
+    <div class="footer">
+      <p>This notification was sent from your <%= @account.name %> account.</p>
+      <p>If you have questions, please contact your administrator.</p>
+    </div>
+  </div>
+</body>
+</html>
