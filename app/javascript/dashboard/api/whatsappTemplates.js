@@ -59,6 +59,11 @@ class WhatsappTemplatesAPI extends ApiClient {
     return axios.post(`${this.url}/${id}/reset_to_draft`);
   }
 
+  // Duplicate a template (creates a draft copy)
+  duplicate(id, newName) {
+    return axios.post(`${this.url}/${id}/duplicate`, { new_name: newName });
+  }
+
   // Get list of WhatsApp channels
   getChannels() {
     return axios.get(`${this.url}/channels`);
@@ -68,6 +73,11 @@ class WhatsappTemplatesAPI extends ApiClient {
   syncAll(channelId) {
     const params = channelId ? { channel_id: channelId } : {};
     return axios.post(`${this.url}/sync_all`, params);
+  }
+
+  // Import templates from Meta (auto-sync on page load)
+  importFromMeta() {
+    return axios.post(`${this.url}/import_from_meta`);
   }
 
   // Get supported languages

@@ -298,12 +298,14 @@ Rails.application.routes.draw do
                 post :submit_to_channels
                 post :sync
                 post :reset_to_draft
+                post :duplicate
               end
               collection do
                 post :sync_all
                 get :languages
                 get :sample
                 get :channels
+                post :import_from_meta
               end
             end
             # Account status tracking for WhatsApp Business accounts

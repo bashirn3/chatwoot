@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::BaseController
-  before_action :set_template, only: [:show, :update, :destroy, :submit, :submit_to_channels, :sync, :reset_to_draft]
+  before_action :set_template, only: [:show, :update, :destroy, :submit, :submit_to_channels, :sync, :reset_to_draft, :duplicate]
   before_action :check_authorization
 
   def index
@@ -9,6 +9,16 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
                  .order(created_at: :desc)
                  .page(params[:page])
                  .per(params[:per_page] || 25)
+
+    render json: {
+      payload: @templates.map { |t| template_response(t) },
+      meta: {
+        count: @templates.total_count,
+        current_page: @templates.current_page,
+        total_pages: @templates.total_pages,
+        total_count: @templates.total_count
+      }
+    }
   end
 
   def show
@@ -155,21 +165,61 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
     end
   end
 
+  # POST /api/v1/accounts/:account_id/whatsapp/templates/:id/duplicate
+  # Creates a draft copy of an existing template (useful for editing approved templates)
+  def duplicate
+    new_name = params[:new_name] || "#{@template.name}_copy"
+    
+    begin
+      copy = @template.create_draft_copy(new_name: new_name)
+      render json: template_response(copy), status: :created
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    end
+  end
+
   # POST /api/v1/accounts/:account_id/whatsapp/templates/sync_all
+  # Syncs templates from Meta for all WhatsApp channels or a specific channel
   def sync_all
-    channel = find_whatsapp_channel
+    channels = if params[:channel_id].present?
+                 [Channel::Whatsapp.find_by(id: params[:channel_id], account_id: Current.account.id)].compact
+               else
+                 fetch_all_whatsapp_channels
+               end
 
-    unless channel
-      return render json: { error: 'No WhatsApp channel found' }, status: :not_found
+    if channels.empty?
+      return render json: { error: 'No WhatsApp channels found' }, status: :not_found
     end
 
-    result = Whatsapp::TemplateManagementService.sync_all_templates(channel)
+    total_synced = 0
+    results = []
 
-    if result[:success]
-      render json: { message: "Synced #{result[:count]} templates from Meta" }, status: :ok
-    else
-      render json: { error: result[:error] }, status: :unprocessable_entity
+    channels.each do |channel|
+      result = Whatsapp::TemplateManagementService.sync_all_templates(channel)
+      results << {
+        channel_id: channel.id,
+        channel_name: channel.inbox&.name || channel.phone_number,
+        success: result[:success],
+        count: result[:count] || 0,
+        error: result[:error]
+      }
+      total_synced += result[:count] || 0 if result[:success]
     end
+
+    render json: {
+      message: "Synced #{total_synced} templates from #{channels.count} channel(s)",
+      total_synced: total_synced,
+      results: results
+    }, status: :ok
+  end
+
+  private
+
+  def fetch_all_whatsapp_channels
+    channel_ids = Current.account.inboxes
+                         .where(channel_type: 'Channel::Whatsapp')
+                         .pluck(:channel_id)
+    Channel::Whatsapp.where(id: channel_ids)
   end
 
   # GET /api/v1/accounts/:account_id/whatsapp/templates/languages
@@ -321,6 +371,43 @@ class Api::V1::Accounts::Whatsapp::TemplatesController < Api::V1::Accounts::Base
       created_at: template.created_at,
       updated_at: template.updated_at
     }
+  end
+
+  # POST /api/v1/accounts/:account_id/whatsapp/templates/import_from_meta
+  # Imports all templates from Meta for all channels
+  # This should be called when the templates page loads
+  def import_from_meta
+    channels = fetch_all_whatsapp_channels
+    
+    if channels.empty?
+      return render json: { 
+        success: false, 
+        message: 'No WhatsApp channels configured. Please add a WhatsApp channel first.' 
+      }, status: :ok
+    end
+
+    total_imported = 0
+    results = []
+
+    channels.each do |channel|
+      result = Whatsapp::TemplateManagementService.sync_all_templates(channel)
+      channel_info = {
+        channel_id: channel.id,
+        channel_name: channel.inbox&.name || channel.phone_number,
+        success: result[:success],
+        count: result[:count] || 0,
+        error: result[:error]
+      }
+      results << channel_info
+      total_imported += result[:count] || 0 if result[:success]
+    end
+
+    render json: {
+      success: true,
+      message: "Imported #{total_imported} templates from #{channels.count} channel(s)",
+      total_imported: total_imported,
+      results: results
+    }, status: :ok
   end
 
   def find_whatsapp_channel
