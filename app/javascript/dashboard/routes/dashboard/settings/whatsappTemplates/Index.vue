@@ -119,6 +119,40 @@ const handleSyncAll = async () => {
   }
 };
 
+const handleImportFromMeta = async () => {
+  try {
+    const result = await store.dispatch('whatsappTemplates/importFromMeta');
+    if (result && result.total_imported > 0) {
+      useAlert(t('WHATSAPP_TEMPLATES.IMPORT_SUCCESS', { count: result.total_imported }));
+    }
+    return result;
+  } catch (error) {
+    console.error('Failed to import templates from Meta:', error);
+    // Silent failure on auto-import, don't show error
+  }
+};
+
+const handleDuplicateTemplate = async (template) => {
+  const newName = prompt(
+    t('WHATSAPP_TEMPLATES.DUPLICATE_PROMPT'),
+    `${template.name}_copy`
+  );
+  
+  if (!newName) return;
+  
+  try {
+    const duplicate = await store.dispatch('whatsappTemplates/duplicateTemplate', {
+      templateId: template.id,
+      newName,
+    });
+    useAlert(t('WHATSAPP_TEMPLATES.DUPLICATE_SUCCESS'));
+    // Navigate to edit the new duplicate
+    navigateToEdit(duplicate);
+  } catch (error) {
+    useAlert(error.response?.data?.error || error.message || t('WHATSAPP_TEMPLATES.DUPLICATE_ERROR'));
+  }
+};
+
 const handleDeleteTemplate = async (template) => {
   if (!confirm(t('WHATSAPP_TEMPLATES.DELETE_CONFIRM', { name: template.name }))) {
     return;
@@ -154,9 +188,17 @@ watch([selectedStatus, selectedCategory, selectedChannel, searchQuery], () => {
 watch(currentPage, fetchTemplates);
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+  // Fetch channels first
+  await fetchChannels();
+  
+  // Auto-import templates from Meta if there are channels
+  if (channels.value && channels.value.length > 0) {
+    await handleImportFromMeta();
+  }
+  
+  // Then fetch templates
   fetchTemplates();
-  fetchChannels();
 });
 </script>
 
@@ -352,6 +394,16 @@ onMounted(() => {
               slate
               faded
               @click="handleSyncTemplate(template)"
+            />
+            
+            <Button
+              v-if="template.status === 'APPROVED'"
+              icon="i-lucide-copy"
+              xs
+              slate
+              faded
+              :title="$t('WHATSAPP_TEMPLATES.DUPLICATE_TO_EDIT')"
+              @click="handleDuplicateTemplate(template)"
             />
             
             <Button

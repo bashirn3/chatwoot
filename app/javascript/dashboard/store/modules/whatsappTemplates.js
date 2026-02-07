@@ -201,6 +201,33 @@ const actions = {
     }
   },
 
+  async duplicateTemplate({ commit }, { templateId, newName }) {
+    commit('SET_UI_FLAG', { flag: 'isCreating', value: true });
+    try {
+      const response = await WhatsappTemplatesAPI.duplicate(templateId, newName);
+      commit('ADD_TEMPLATE', response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      commit('SET_UI_FLAG', { flag: 'isCreating', value: false });
+    }
+  },
+
+  async importFromMeta({ commit, dispatch }) {
+    commit('SET_UI_FLAG', { flag: 'isSyncing', value: true });
+    try {
+      const response = await WhatsappTemplatesAPI.importFromMeta();
+      // Refresh the templates list after import
+      await dispatch('fetchTemplates');
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      commit('SET_UI_FLAG', { flag: 'isSyncing', value: false });
+    }
+  },
+
   async fetchLanguages({ commit }) {
     try {
       const response = await WhatsappTemplatesAPI.getLanguages();

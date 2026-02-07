@@ -74,7 +74,7 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
   private
 
   def check_authorization
-    authorize :account, :manage_whatsapp_templates?
+    authorize Current.account, :manage_whatsapp_templates?
   end
 
   def fetch_whatsapp_channels

@@ -134,13 +134,36 @@ class WhatsappTemplate < ApplicationRecord
   end
 
   # Check if template can be edited
+  # Approved templates can be duplicated for editing, but the original is read-only
   def editable?
     status_draft? || status_rejected? || status_pending?
   end
 
+  # Check if template content can be modified (for creating a copy)
+  def content_editable?
+    true # All templates can have their content viewed/copied
+  end
+
   # Check if template can be reset to draft
   def resettable_to_draft?
-    status_pending? || status_rejected? || status_paused?
+    status_pending? || status_rejected? || status_paused? || status_approved?
+  end
+
+  # Create a draft copy of this template for editing
+  def create_draft_copy(new_name: nil)
+    copy = dup
+    copy.name = new_name || "#{name}_copy_#{Time.current.to_i}"
+    copy.status = 'DRAFT'
+    copy.meta_template_id = nil
+    copy.submitted_at = nil
+    copy.approved_at = nil
+    copy.rejected_at = nil
+    copy.rejection_reason = nil
+    copy.quality_score = nil
+    copy.last_synced_at = nil
+    copy.meta_response = nil
+    copy.save!
+    copy
   end
 
   # Reset template to draft status for re-editing
