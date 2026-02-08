@@ -10,6 +10,7 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 import TextArea from 'next/textarea/TextArea.vue';
 import WhatsappReauthorize from '../channels/whatsapp/Reauthorize.vue';
 import { sanitizeAllowedDomains } from 'dashboard/helper/URLHelper';
+import WhatsappAccountStatusAPI from 'dashboard/api/whatsappAccountStatus';
 
 export default {
   components: {
@@ -38,6 +39,13 @@ export default {
       isSyncingTemplates: false,
       allowedDomains: '',
       isUpdatingAllowedDomains: false,
+      // WABA Subscription status
+      wabaSubscribed: null,
+      wabaSubscriptionAppName: null,
+      wabaSubscriptionError: null,
+      wabaId: null,
+      isCheckingSubscription: false,
+      isSubscribing: false,
     };
   },
   validations: {
@@ -61,11 +69,50 @@ export default {
   },
   mounted() {
     this.setDefaults();
+    this.checkWabaSubscription();
   },
   methods: {
     setDefaults() {
       this.hmacMandatory = this.inbox.hmac_mandatory || false;
       this.allowedDomains = this.inbox.allowed_domains || '';
+    },
+    async checkWabaSubscription() {
+      if (!this.isAWhatsAppChannel || this.isATwilioChannel) return;
+      
+      this.isCheckingSubscription = true;
+      try {
+        const response = await WhatsappAccountStatusAPI.getSubscription(this.inbox.id);
+        this.wabaSubscribed = response.data.subscribed;
+        this.wabaSubscriptionAppName = response.data.app_name;
+        this.wabaSubscriptionError = response.data.error;
+        this.wabaId = response.data.waba_id;
+      } catch (error) {
+        console.error('Failed to check WABA subscription:', error);
+        this.wabaSubscriptionError = error.response?.data?.error || error.message;
+      } finally {
+        this.isCheckingSubscription = false;
+      }
+    },
+    async subscribeWaba() {
+      this.isSubscribing = true;
+      try {
+        const response = await WhatsappAccountStatusAPI.subscribe(this.inbox.id);
+        if (response.data.success) {
+          this.wabaSubscribed = true;
+          this.wabaSubscriptionAppName = response.data.subscription?.app_name;
+          this.wabaSubscriptionError = null;
+          useAlert(this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_SUCCESS'));
+        } else {
+          this.wabaSubscriptionError = response.data.error;
+          useAlert(response.data.error || this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_ERROR'));
+        }
+      } catch (error) {
+        console.error('Failed to subscribe WABA:', error);
+        this.wabaSubscriptionError = error.response?.data?.error || error.message;
+        useAlert(this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_ERROR'));
+      } finally {
+        this.isSubscribing = false;
+      }
     },
     handleHmacFlag() {
       this.updateInbox();
@@ -412,6 +459,68 @@ export default {
           <NextButton :disabled="isSyncingTemplates" @click="syncTemplates">
             {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_TEMPLATES_SYNC_BUTTON') }}
           </NextButton>
+        </div>
+      </SettingsSection>
+
+      <!-- WABA Subscription Status Section -->
+      <SettingsSection
+        :title="$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIPTION_TITLE')"
+        :sub-title="$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIPTION_SUBHEADER')"
+      >
+        <div class="flex flex-col gap-3">
+          <!-- Loading State -->
+          <div v-if="isCheckingSubscription" class="flex items-center gap-2">
+            <span class="text-sm text-n-slate-11">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_CHECKING_STATUS') }}
+            </span>
+          </div>
+
+          <!-- Subscribed State -->
+          <div
+            v-else-if="wabaSubscribed"
+            class="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+          >
+            <div class="flex items-center gap-2">
+              <span class="i-lucide-check-circle text-green-600 text-lg" />
+              <span class="text-sm text-green-800 dark:text-green-200 font-medium">
+                {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBED') }}
+              </span>
+            </div>
+            <p v-if="wabaSubscriptionAppName" class="text-xs text-green-700 dark:text-green-300 mt-1 ml-6">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBED_TO_APP', { appName: wabaSubscriptionAppName }) }}
+            </p>
+          </div>
+
+          <!-- Not Subscribed State -->
+          <div
+            v-else
+            class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <span class="i-lucide-alert-triangle text-yellow-600 text-lg" />
+              <span class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
+                {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_NOT_SUBSCRIBED') }}
+              </span>
+            </div>
+            <p class="text-xs text-yellow-700 dark:text-yellow-300 mb-2 ml-6">
+              {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_NOT_SUBSCRIBED_DESC') }}
+            </p>
+            <p v-if="wabaId" class="text-xs text-n-slate-11 mb-2 ml-6">
+              <strong>WABA ID:</strong> {{ wabaId }}
+            </p>
+            <p v-if="wabaSubscriptionError" class="text-xs text-red-600 dark:text-red-400 mb-3 ml-6 whitespace-pre-wrap">
+              {{ wabaSubscriptionError }}
+            </p>
+            <div class="ml-6">
+              <NextButton
+                :is-loading="isSubscribing"
+                :disabled="isSubscribing"
+                @click="subscribeWaba"
+              >
+                {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_BUTTON') }}
+              </NextButton>
+            </div>
+          </div>
         </div>
       </SettingsSection>
     </div>

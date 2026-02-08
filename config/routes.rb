@@ -317,6 +317,8 @@ Rails.application.routes.draw do
                 get 'account_status', to: 'account_status#show'
                 post 'account_status/sync', to: 'account_status#sync'
                 get 'account_status/events', to: 'account_status#events'
+                get 'subscription', to: 'account_status#subscription'
+                post 'subscribe', to: 'account_status#subscribe'
               end
             end
           end

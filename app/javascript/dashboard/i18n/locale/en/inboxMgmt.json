@@ -752,6 +752,16 @@
       "WHATSAPP_TEMPLATES_SYNC_SUBHEADER": "Manually sync message templates from WhatsApp to update your available templates.",
       "WHATSAPP_TEMPLATES_SYNC_BUTTON": "Sync Templates",
       "WHATSAPP_TEMPLATES_SYNC_SUCCESS": "Templates sync initiated successfully. It may take a couple of minutes to update.",
+      "WABA_SUBSCRIPTION_TITLE": "WhatsApp Business Account Subscription",
+      "WABA_SUBSCRIPTION_SUBHEADER": "Your WhatsApp Business Account must be subscribed to your app to receive inbound messages from customers.",
+      "WABA_CHECKING_STATUS": "Checking subscription status...",
+      "WABA_SUBSCRIBED": "Business Account Subscribed",
+      "WABA_SUBSCRIBED_TO_APP": "Subscribed to: {appName}",
+      "WABA_NOT_SUBSCRIBED": "Business Account Not Subscribed",
+      "WABA_NOT_SUBSCRIBED_DESC": "Your WhatsApp Business Account is not subscribed to this app. You won't receive inbound messages until you subscribe.",
+      "WABA_SUBSCRIBE_BUTTON": "Subscribe Now",
+      "WABA_SUBSCRIBE_SUCCESS": "WhatsApp Business Account subscribed successfully! You can now receive inbound messages.",
+      "WABA_SUBSCRIBE_ERROR": "Failed to subscribe WhatsApp Business Account. Please check your credentials and try again.",
       "UPDATE_PRE_CHAT_FORM_SETTINGS": "Update Pre Chat Form Settings"
     },
     "HELP_CENTER": {

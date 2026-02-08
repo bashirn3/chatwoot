@@ -32,6 +32,16 @@ class WhatsappAccountStatusAPI extends ApiClient {
       params: { page, per_page: perPage }
     });
   }
+
+  // Check if the WhatsApp Business Account is subscribed to the app
+  getSubscription(inboxId) {
+    return axios.get(`${this.url}/${inboxId}/subscription`);
+  }
+
+  // Subscribe the WhatsApp Business Account to the app (required for receiving inbound messages)
+  subscribe(inboxId) {
+    return axios.post(`${this.url}/${inboxId}/subscribe`);
+  }
 }
 
 export default new WhatsappAccountStatusAPI();

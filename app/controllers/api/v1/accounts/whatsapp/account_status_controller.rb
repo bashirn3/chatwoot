@@ -1,6 +1,6 @@
 class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::BaseController
   before_action :check_authorization
-  before_action :set_channel, only: [:show, :sync, :events]
+  before_action :set_channel, only: [:show, :sync, :events, :subscription, :subscribe]
 
   # GET /api/v1/accounts/:account_id/whatsapp/account_status
   # Returns status for all WhatsApp channels in the account
@@ -52,6 +52,32 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
     }
   end
 
+  # GET /api/v1/accounts/:account_id/whatsapp/account_status/:inbox_id/subscription
+  # Check if the WhatsApp Business Account is subscribed to the app
+  def subscription
+    subscription_data = fetch_subscription_status(@channel)
+    render json: subscription_data
+  end
+
+  # POST /api/v1/accounts/:account_id/whatsapp/account_status/:inbox_id/subscribe
+  # Subscribe the WhatsApp Business Account to the app (required for receiving inbound messages)
+  def subscribe
+    result = subscribe_waba_to_app(@channel)
+
+    if result[:success]
+      render json: {
+        success: true,
+        message: 'WhatsApp Business Account successfully subscribed. You can now receive inbound messages.',
+        subscription: result[:subscription]
+      }
+    else
+      render json: {
+        success: false,
+        error: result[:error]
+      }, status: :unprocessable_entity
+    end
+  end
+
   # GET /api/v1/accounts/:account_id/whatsapp/account_status/alerts
   # Returns channels that need attention
   def alerts
@@ -99,6 +125,7 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
   def channel_status_json(channel)
     inbox = channel.inbox
     messages_stats = calculate_message_stats(inbox)
+    subscription_status = fetch_subscription_status(channel)
 
     {
       inbox_id: inbox&.id,
@@ -120,7 +147,12 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
       has_issues: channel.has_issues?,
       messages_sent_today: messages_stats[:today],
       messages_sent_24h: messages_stats[:last_24h],
-      messages_sent_total: messages_stats[:total]
+      messages_sent_total: messages_stats[:total],
+      # Subscription status for receiving inbound messages
+      waba_subscribed: subscription_status[:subscribed],
+      subscription_app_name: subscription_status[:app_name],
+      subscription_error: subscription_status[:error],
+      webhook_verify_token: channel.provider_config['webhook_verify_token']
     }
   end
 
@@ -194,5 +226,56 @@ class Api::V1::Accounts::Whatsapp::AccountStatusController < Api::V1::Accounts::
     end
 
     issues
+  end
+
+  def fetch_subscription_status(channel)
+    waba_id = channel.provider_config['business_account_id']
+    api_key = channel.provider_config['api_key']
+
+    return { subscribed: false, error: 'Missing business_account_id (WABA ID) configuration' } if waba_id.blank?
+    return { subscribed: false, error: 'Missing api_key configuration' } if api_key.blank?
+
+    api_client = Whatsapp::FacebookApiClient.new(api_key)
+    response = api_client.get_subscribed_apps(waba_id)
+
+    subscribed_app = response['data']&.find do |app|
+      app.dig('whatsapp_business_api_data', 'id').present?
+    end
+
+    {
+      subscribed: subscribed_app.present?,
+      app_name: subscribed_app&.dig('whatsapp_business_api_data', 'name'),
+      app_id: subscribed_app&.dig('whatsapp_business_api_data', 'id'),
+      waba_id: waba_id,
+      webhook_url: channel.provider_config['webhook_url'],
+      webhook_verify_token: channel.provider_config['webhook_verify_token']
+    }
+  rescue StandardError => e
+    Rails.logger.error("[WHATSAPP] Subscription status check failed for WABA #{waba_id}: #{e.message}")
+    error_msg = e.message
+    # Provide helpful error message for common issues
+    if error_msg.include?('not be found') || error_msg.include?('does not exist')
+      error_msg = "Invalid WABA ID (#{waba_id}). The stored business_account_id may be a Business Manager ID instead of the WhatsApp Business Account ID. Please update the channel with the correct WABA ID from Meta Business Manager → WhatsApp Manager."
+    end
+    { subscribed: false, error: error_msg, waba_id: waba_id, api_key: api_key&.first(30) }
+  end
+
+  def subscribe_waba_to_app(channel)
+    waba_id = channel.provider_config['business_account_id']
+    api_key = channel.provider_config['api_key']
+
+    return { success: false, error: 'Missing business_account_id configuration' } if waba_id.blank?
+    return { success: false, error: 'Missing api_key configuration' } if api_key.blank?
+
+    # Use the WebhookSetupService which handles full subscription
+    service = Whatsapp::WebhookSetupService.new(channel, waba_id, api_key)
+    service.perform
+
+    # Fetch updated subscription status
+    subscription = fetch_subscription_status(channel)
+    { success: true, subscription: subscription }
+  rescue StandardError => e
+    Rails.logger.error("[WHATSAPP] WABA subscription failed: #{e.message}")
+    { success: false, error: e.message }
   end
 end
