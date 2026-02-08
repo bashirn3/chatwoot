@@ -79,6 +79,15 @@ class Whatsapp::FacebookApiClient
     handle_response(response, 'App subscription to WABA failed')
   end
 
+  def get_subscribed_apps(waba_id)
+    response = HTTParty.get(
+      "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",
+      headers: request_headers
+    )
+
+    handle_response(response, 'Failed to fetch subscribed apps')
+  end
+
   def override_waba_callback(waba_id, callback_url, verify_token)
     response = HTTParty.post(
       "#{BASE_URI}/#{@api_version}/#{waba_id}/subscribed_apps",
