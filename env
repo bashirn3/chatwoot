@@ -1,0 +1,48 @@
+########################
+# CORE
+########################
+
+SECRET_KEY_BASE=1557eee08a5bd03d5d190e274c985df953c5de3cdbfe84b26603dbe998a587b579f0fff2855ebe10dd687c41538099d64260ec9e4137bb4882a904c644c90da1
+
+FRONTEND_URL=http://4.234.162.90:3000
+FORCE_SSL=false
+ENABLE_ACCOUNT_SIGNUP=true
+
+RAILS_ENV=production
+NODE_ENV=production
+
+########################
+# REDIS (docker)
+########################
+
+REDIS_URL=redis://redis:6379
+REDIS_PASSWORD=redispass
+
+########################
+# SUPABASE POSTGRES
+########################
+
+POSTGRES_HOST=aws-1-eu-west-1.pooler.supabase.com
+POSTGRES_PORT=6543
+POSTGRES_DATABASE=postgres
+POSTGRES_USERNAME=postgres.rkrvvolklprleurtvysz
+POSTGRES_PASSWORD=zsh3OZqynHJk1Jsf
+
+########################
+# STORAGE
+########################
+
+ACTIVE_STORAGE_SERVICE=local
+
+########################
+# MAIL (can improve later)
+########################
+
+MAILER_SENDER_EMAIL=Chatwoot <accounts@chatwoot.com>
+
+########################
+# LOGS
+########################
+
+RAILS_LOG_TO_STDOUT=true
+LOG_LEVEL=info
