@@ -209,6 +209,74 @@
         "SUCCESS_MESSAGE": "Campaign deleted successfully",
         "ERROR_MESSAGE": "There was an error. Please try again."
       }
+    },
+    "LAUNCHER": {
+      "TITLE": "Campaign Launcher",
+      "NEXT": "Next",
+      "BACK": "Back",
+      "STEPS": {
+        "UPLOAD": "Upload CSV",
+        "TEMPLATE": "Template",
+        "MAPPING": "Map Variables",
+        "LAUNCH": "Launch"
+      },
+      "CSV": {
+        "TITLE": "Upload your contacts",
+        "DESCRIPTION": "Upload a CSV file with phone numbers and contact details for your campaign.",
+        "DROP_LABEL": "Click to upload or drag and drop a CSV file",
+        "FORMAT_HINT": "CSV format with headers — must include a phone number column",
+        "UPLOADING": "Uploading and parsing CSV...",
+        "UPLOAD_ERROR": "Failed to upload CSV. Please try again.",
+        "INVALID_FILE": "Please upload a .csv file",
+        "PHONE_REQUIRED": "Please select the phone number column",
+        "ROWS_FOUND": "rows",
+        "COLUMNS": "columns",
+        "PHONE_COLUMN": "Phone number column",
+        "NAME_COLUMN": "Name column (optional)",
+        "SELECT_COLUMN": "Select column...",
+        "NONE": "None"
+      },
+      "TEMPLATE": {
+        "TITLE": "Select template",
+        "DESCRIPTION": "Choose a WhatsApp inbox and an approved message template for your campaign.",
+        "LOADING": "Loading WhatsApp inboxes...",
+        "FETCH_ERROR": "Failed to load inboxes. Please try again.",
+        "NO_INBOXES": "No WhatsApp inboxes found. Please set up a WhatsApp inbox first.",
+        "SELECT_INBOX": "WhatsApp inbox",
+        "SELECT_TEMPLATE": "Message template",
+        "TEMPLATES_COUNT": "templates",
+        "PREVIEW": "Template preview"
+      },
+      "MAPPING": {
+        "TITLE": "Map template variables",
+        "DESCRIPTION": "Map each template variable to a column from your CSV file.",
+        "NO_VARIABLES": "This template has no variables — you can proceed to launch.",
+        "SELECT_CSV_COLUMN": "Select CSV column...",
+        "PREVIEW_LABEL": "Preview (using first CSV row)"
+      },
+      "LAUNCH": {
+        "TITLE": "Review and launch",
+        "DESCRIPTION": "Review your campaign settings and launch when ready.",
+        "INBOX": "Inbox",
+        "TEMPLATE": "Template",
+        "RECIPIENTS": "Recipients",
+        "VARIABLES": "Variables",
+        "DELAY": "Delay between messages",
+        "VALIDATE_BTN": "Validate",
+        "LAUNCH_BTN": "Launch campaign",
+        "VALIDATE_ERROR": "Validation failed. Please try again.",
+        "PROGRESS": "Progress",
+        "SENT": "Sent",
+        "FAILED": "Failed",
+        "SKIPPED": "Skipped",
+        "SENDING": "Sending messages...",
+        "ABORT": "Abort",
+        "STREAM_ERROR": "Connection lost. Some messages may have been sent.",
+        "COMPLETE": "Campaign complete!",
+        "COMPLETE_SUMMARY": "{sent} sent, {failed} failed, {skipped} skipped",
+        "MS_UNIT": "ms",
+        "NEW_CAMPAIGN": "Start new campaign"
+      }
     }
   }
 }
