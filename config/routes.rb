@@ -400,6 +400,14 @@ Rails.application.routes.draw do
       # Frontend API endpoint to trigger SAML authentication flow
       post 'auth/saml_login', to: 'auth#saml_login'
 
+      # Clerk authentication
+      namespace :auth do
+        resource :clerk, only: [], controller: 'clerk' do
+          post :verify
+          post :select_org
+        end
+      end
+
       resource :profile, only: [:show, :update] do
         delete :avatar, on: :collection
         member do
@@ -595,6 +603,7 @@ Rails.application.routes.draw do
   post 'webhooks/sms/:phone_number', to: 'webhooks/sms#process_payload'
   get 'webhooks/whatsapp/:phone_number', to: 'webhooks/whatsapp#verify'
   post 'webhooks/whatsapp/:phone_number', to: 'webhooks/whatsapp#process_payload'
+  post 'webhooks/clerk', to: 'webhooks/clerk#process_payload'
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/tiktok', to: 'webhooks/tiktok#events'
