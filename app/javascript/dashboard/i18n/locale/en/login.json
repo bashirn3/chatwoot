@@ -36,6 +36,21 @@
       "API": {
         "ERROR_MESSAGE": "SSO authentication failed. Please check your credentials and try again."
       }
+    },
+    "CLERK": {
+      "LABEL": "Login with Clerk",
+      "TITLE": "Sign in with Clerk",
+      "BACK_TO_LOGIN": "Back to login",
+      "LOADING": "Loading authentication...",
+      "VERIFYING": "Verifying your identity...",
+      "NOT_CONFIGURED": "Clerk authentication is not configured. Please contact your administrator.",
+      "INVALID_KEY": "Invalid Clerk configuration. Please contact your administrator.",
+      "LOAD_ERROR": "Could not load the authentication service. Please try again.",
+      "VERIFY_ERROR": "Could not verify your identity. Please try again.",
+      "ORG_PICKER": {
+        "TITLE": "Select an organization",
+        "SUBTITLE": "Choose which organization you'd like to sign in to."
+      }
     }
   }
 }
