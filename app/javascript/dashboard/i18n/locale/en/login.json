@@ -1,5 +1,6 @@
 {
   "LOGIN": {
+    "BRAND_NAME": "VASUP",
     "TITLE": "Login to Chatwoot",
     "EMAIL": {
       "LABEL": "Email",
