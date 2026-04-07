@@ -2,6 +2,7 @@ import { frontendURL } from 'dashboard/helper/URLHelper';
 
 import Login from './login/Index.vue';
 import SamlLogin from './login/Saml.vue';
+import ClerkLogin from './login/Clerk.vue';
 import Signup from './auth/signup/Index.vue';
 import ResetPassword from './auth/reset/password/Index.vue';
 import Confirmation from './auth/confirmation/Index.vue';
@@ -30,6 +31,12 @@ export default [
       authError: route.query.error,
       target: route.query.target,
     }),
+  },
+  {
+    path: frontendURL('auth/clerk'),
+    name: 'clerk_login',
+    component: ClerkLogin,
+    meta: { ignoreSession: true },
   },
   {
     path: frontendURL('auth/signup'),

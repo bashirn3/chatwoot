@@ -13,6 +13,7 @@ import { useBranding } from 'shared/composables/useBranding';
 import SimpleDivider from '../../components/Divider/SimpleDivider.vue';
 import FormInput from '../../components/Form/Input.vue';
 import GoogleOAuthButton from '../../components/GoogleOauth/Button.vue';
+import ClerkOAuthButton from '../../components/ClerkOauth/Button.vue';
 import Spinner from 'shared/components/Spinner.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -31,6 +32,7 @@ export default {
   components: {
     FormInput,
     GoogleOAuthButton,
+    ClerkOAuthButton,
     Spinner,
     NextButton,
     SimpleDivider,
@@ -98,6 +100,12 @@ export default {
     },
     showSamlLogin() {
       return this.allowedLoginMethods.includes('saml');
+    },
+    showClerkLogin() {
+      return (
+        this.allowedLoginMethods.includes('clerk') &&
+        Boolean(window.chatwootConfig.clerkPublishableKey)
+      );
     },
   },
   created() {
@@ -266,6 +274,7 @@ export default {
       <div v-if="!email">
         <div class="flex flex-col gap-4">
           <GoogleOAuthButton v-if="showGoogleOAuth" />
+          <ClerkOAuthButton v-if="showClerkLogin" />
           <div v-if="showSamlLogin" class="text-center">
             <router-link
               to="/app/login/sso"
@@ -281,7 +290,7 @@ export default {
             </router-link>
           </div>
           <SimpleDivider
-            v-if="showGoogleOAuth || showSamlLogin"
+            v-if="showGoogleOAuth || showSamlLogin || showClerkLogin"
             :label="$t('COMMON.OR')"
             class="uppercase"
           />
