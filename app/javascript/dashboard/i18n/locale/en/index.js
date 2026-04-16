@@ -37,6 +37,7 @@ import sla from './sla.json';
 import teamsSettings from './teamsSettings.json';
 import botEditor from './botEditor.json';
 import bots from './bots.json';
+import intercomPreChat from './intercomPreChat.json';
 import whatsappConnection from './whatsappConnection.json';
 import whatsappTemplates from './whatsappTemplates.json';
 import whatsappAccountStatus from './whatsappAccountStatus.json';
@@ -84,6 +85,7 @@ export default {
   ...teamsSettings,
   ...botEditor,
   ...bots,
+  ...intercomPreChat,
   ...whatsappConnection,
   ...whatsappTemplates,
   ...whatsappAccountStatus,

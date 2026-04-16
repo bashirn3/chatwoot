@@ -1,0 +1,33 @@
+{
+  "INTERCOM_PRECHAT": {
+    "TITLE": "Wasup Support",
+    "BRAND_INITIAL": "W",
+    "STEP_PROGRESS": "Step {current} of {total}",
+    "STEPS": {
+      "NAME": "What should we call you?",
+      "EMAIL": "What is your email?",
+      "ISSUE": "What issue are you facing?",
+      "DURATION": "How long has this been happening?",
+      "SCREENSHOTS": "Got any screenshots?"
+    },
+    "DURATION": {
+      "JUST_NOW": "Just now",
+      "HOURS": "A few hours",
+      "DAYS": "A few days",
+      "WEEKS_PLUS": "A week or more"
+    },
+    "PLACEHOLDERS": {
+      "NAME": "Your name",
+      "EMAIL": "you@company.com",
+      "ISSUE": "Describe the issue you are experiencing...",
+      "SCREENSHOT_NOTE": "Or describe where the issue appears..."
+    },
+    "SCREENSHOT_HINT": "Attach screenshots or describe where we can see the issue.",
+    "UPLOAD_LABEL": "Click to upload images",
+    "BACK": "Back",
+    "CONTINUE": "Continue",
+    "START_CHAT": "Start chat",
+    "SENDING": "Sending...",
+    "REMOVE_FILE": "Remove file"
+  }
+}

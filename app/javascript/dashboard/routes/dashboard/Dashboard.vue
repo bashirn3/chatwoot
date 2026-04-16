@@ -22,6 +22,7 @@ const FloatingCallWidget = defineAsyncComponent(
 
 import CopilotLauncher from 'dashboard/components-next/copilot/CopilotLauncher.vue';
 import CopilotContainer from 'dashboard/components/copilot/CopilotContainer.vue';
+import IntercomPreChat from 'dashboard/components-next/intercom/IntercomPreChat.vue';
 
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher.vue';
 import { useCallsStore } from 'dashboard/stores/calls';
@@ -37,6 +38,7 @@ export default {
     CopilotContainer,
     FloatingCallWidget,
     MobileSidebarLauncher,
+    IntercomPreChat,
   },
   setup() {
     const upgradePageRef = ref(null);
@@ -61,6 +63,7 @@ export default {
       showCreateAccountModal: false,
       showShortcutModal: false,
       isMobileSidebarOpen: false,
+      intercomBooted: false,
     };
   },
   computed: {
@@ -103,9 +106,12 @@ export default {
     },
     '$store.getters.getCurrentUser': {
       handler(user) {
-        if (user?.id && !this._intercomBooted) {
-          this._intercomBooted = true;
+        if (user?.id && !this.intercomBooted) {
+          this.intercomBooted = true;
           this.bootIntercom(user);
+          this.$nextTick(() => {
+            this.$refs.intercomPreChat?.prefillFromUser(user);
+          });
         }
       },
       immediate: true,
@@ -210,6 +216,7 @@ export default {
         @close="closeKeyShortcutModal"
         @clickaway="closeKeyShortcutModal"
       />
+      <IntercomPreChat ref="intercomPreChat" />
     </main>
   </div>
 </template>
