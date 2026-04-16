@@ -2,6 +2,7 @@
   "INTERCOM_PRECHAT": {
     "TITLE": "Wasup Support",
     "BRAND_INITIAL": "W",
+    "LAUNCHER_LABEL": "Contact support",
     "STEP_PROGRESS": "Step {current} of {total}",
     "STEPS": {
       "NAME": "What should we call you?",
@@ -28,6 +29,9 @@
     "CONTINUE": "Continue",
     "START_CHAT": "Start chat",
     "SENDING": "Sending...",
-    "REMOVE_FILE": "Remove file"
+    "REMOVE_FILE": "Remove file",
+    "SUCCESS_MESSAGE": "Your info has been sent. The Intercom chat is now open with your details pre-filled.",
+    "SUCCESS_HINT": "Just hit send in the chat window to start the conversation.",
+    "DONE": "Done"
   }
 }

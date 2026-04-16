@@ -136,6 +136,7 @@ export default {
       }
       window.Intercom('boot', {
         app_id: APP_ID,
+        hide_default_launcher: true,
         user_id: String(user.id),
         name: user.name,
         email: user.email,
