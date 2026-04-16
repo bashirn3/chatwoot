@@ -105,15 +105,15 @@ function submitToIntercom() {
   window.Intercom('update', {
     name: name.value,
     email: email.value,
-    issue_description: issueDescription.value,
-    issue_duration: durationText,
-    has_screenshots: attachedFiles.value.length > 0,
   });
 
-  window.Intercom('showNewMessage', messageBody);
-
+  isOpen.value = false;
   submitting.value = false;
-  submitted.value = true;
+
+  setTimeout(() => {
+    window.Intercom('showNewMessage', messageBody);
+    resetForm();
+  }, 350);
 }
 
 function nextStep() {
@@ -244,48 +244,7 @@ defineExpose({ openForm, prefillFromUser });
               </button>
             </div>
 
-            <!-- Success state -->
-            <template v-if="submitted">
-              <div
-                class="flex-1 flex flex-col items-center justify-center gap-4 px-5 pb-6"
-              >
-                <div
-                  class="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30"
-                >
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="text-green-600 dark:text-green-400"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                </div>
-                <p class="text-sm text-n-slate-11 text-center">
-                  {{ t('INTERCOM_PRECHAT.SUCCESS_MESSAGE') }}
-                </p>
-                <p class="text-xs text-n-slate-9 text-center">
-                  {{ t('INTERCOM_PRECHAT.SUCCESS_HINT') }}
-                </p>
-              </div>
-              <div class="px-5 py-4 border-t border-n-weak">
-                <button
-                  type="button"
-                  class="w-full rounded-lg bg-n-brand px-4 py-2 text-sm font-medium text-white hover:opacity-90 shadow-sm transition-all duration-150"
-                  @click="closeAndReset"
-                >
-                  {{ t('INTERCOM_PRECHAT.DONE') }}
-                </button>
-              </div>
-            </template>
-
-            <!-- Form steps -->
-            <template v-else>
+            <template v-if="!submitted">
               <div class="px-5 pb-3">
                 <div
                   class="h-1 w-full rounded-full bg-n-alpha-2 overflow-hidden"
