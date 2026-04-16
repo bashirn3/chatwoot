@@ -117,6 +117,30 @@ onMounted(() => {
 
 <template>
   <div class="w-full p-8 overflow-auto">
+    <div class="max-w-3xl mx-0 mb-8">
+      <div
+        class="relative overflow-hidden rounded-xl border border-n-weak bg-n-alpha-2 p-6"
+      >
+        <div
+          class="absolute inset-0 bg-gradient-to-br from-n-brand/5 to-transparent pointer-events-none"
+        />
+        <div class="relative flex flex-col gap-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="flex items-center justify-center size-10 rounded-lg bg-n-brand/10"
+            >
+              <i class="i-lucide-inbox text-n-brand size-5" />
+            </div>
+            <h2 class="text-lg font-semibold text-n-slate-12">
+              {{ t('INBOX_MGMT.ADD.AUTH.TITLE') }}
+            </h2>
+          </div>
+          <p class="text-sm text-n-slate-11 leading-relaxed max-w-2xl">
+            {{ t('INBOX_MGMT.ADD.AUTH.DESC') }}
+          </p>
+        </div>
+      </div>
+    </div>
     <div
       class="grid max-w-3xl grid-cols-1 xs:grid-cols-2 mx-0 gap-6 sm:grid-cols-3"
     >

@@ -49,6 +49,11 @@
     "UNMUTE_CONTACT": "Unblock Contact",
     "MUTED_SUCCESS": "This contact is blocked successfully. You will not be notified of any future conversations.",
     "UNMUTED_SUCCESS": "This contact is unblocked successfully.",
+    "ENABLE_BOT": "Enable Bot",
+    "DISABLE_BOT": "Disable Bot",
+    "BOT_ENABLED_SUCCESS": "Bot has been enabled for this conversation.",
+    "BOT_DISABLED_SUCCESS": "Bot has been disabled for this conversation.",
+    "BOT_TOGGLE_FAILED": "Failed to toggle bot. Please try again.",
     "SEND_TRANSCRIPT": "Send Transcript",
     "EDIT_LABEL": "Edit",
     "SIDEBAR_SECTIONS": {
@@ -326,7 +331,10 @@
           "CANCEL": "Cancel",
           "IMPORT": "Import",
           "SUCCESS_MESSAGE": "You will be notified via email when the import is complete.",
-          "ERROR_MESSAGE": "There was an error, please try again"
+          "ERROR_MESSAGE": "There was an error, please try again",
+          "COLUMN_MAPPING": "Column Mapping",
+          "DATA_PREVIEW": "Data Preview",
+          "PREVIEW_NOTE": "Showing first 3 rows. Columns mapped to standard fields are shown in green, custom attributes in blue."
         },
         "EXPORT_CONTACT": {
           "TITLE": "Export contacts",

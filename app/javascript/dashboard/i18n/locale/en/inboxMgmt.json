@@ -236,11 +236,13 @@
           "WHATSAPP_CLOUD": "WhatsApp Cloud",
           "WHATSAPP_CLOUD_DESC": "Quick setup through Meta",
           "TWILIO_DESC": "Connect via Twilio credentials",
+          "BAILEYS": "Phone App",
+          "BAILEYS_DESC": "Link your device via code",
           "360_DIALOG": "360Dialog"
         },
         "SELECT_PROVIDER": {
-          "TITLE": "Select your API provider",
-          "DESCRIPTION": "Choose your WhatsApp provider. You can connect directly through Meta which requires no setup, or connect through Twilio using your account credentials."
+          "TITLE": "Select your WhatsApp provider",
+          "DESCRIPTION": "Choose how to connect WhatsApp. Scan a QR code to link your phone directly, or use a Cloud API provider for business accounts."
         },
         "INBOX_NAME": {
           "LABEL": "Inbox Name",
@@ -280,6 +282,32 @@
           "WEBHOOK_VERIFICATION_TOKEN": "Webhook Verification Token"
         },
         "SUBMIT_BUTTON": "Create WhatsApp Channel",
+        "BAILEYS": {
+          "TITLE": "Connect WhatsApp via Phone",
+          "DESCRIPTION": "Link your personal or business WhatsApp by scanning a QR code or entering a pairing code. This creates a direct connection using your phone's WhatsApp account.",
+          "INBOX_NAME": {
+            "LABEL": "Inbox name",
+            "PLACEHOLDER": "e.g. My WhatsApp, Sales WhatsApp"
+          },
+          "CONNECTION_METHOD": "Connection method",
+          "METHOD_QR": "Scan QR code",
+          "METHOD_PAIRING": "Link with phone number",
+          "PHONE_NUMBER": {
+            "LABEL": "Phone number",
+            "PLACEHOLDER": "3001234567"
+          },
+          "CREATE_BUTTON": "Create & Connect",
+          "QR_TITLE": "Scan QR Code",
+          "QR_INSTRUCTIONS": "Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → Scan this QR code",
+          "QR_ALT": "WhatsApp QR Code",
+          "PAIRING_TITLE": "Enter Pairing Code",
+          "PAIRING_INSTRUCTIONS": "Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → Enter the code below instead of scanning",
+          "PAIRING_CODE": "Pairing code",
+          "QR_WAITING": "Waiting for connection...",
+          "CONNECTED": "WhatsApp connected successfully!",
+          "CONTINUE": "Continue to add agents",
+          "ERROR": "Failed to connect. Check that the WhatsApp Bridge service is running."
+        },
         "EMBEDDED_SIGNUP": {
           "TITLE": "Quick setup with Meta",
           "DESC": "Use the WhatsApp Embedded Signup flow to quickly connect new numbers. You will be redirected to Meta to log into your WhatsApp Business account. Having admin access will help make the setup smooth and easy.",
@@ -438,7 +466,7 @@
       },
       "AUTH": {
         "TITLE": "Choose a channel",
-        "DESC": "Chatwoot supports live-chat widgets, Facebook Messenger, WhatsApp, Emails, etc., as channels. If you want to build a custom channel, you can create it using the API channel. To get started, choose one of the channels below.",
+        "DESC": "Connect your customers across every channel — live chat, WhatsApp, Facebook, Instagram, Email, Telegram, and more. Each channel becomes an inbox where your team can manage all conversations in one place. Pick a channel below to get started.",
         "TITLE_NEXT": "Complete the setup",
         "TITLE_FINISH": "Voilà!",
         "CHANNEL": {
@@ -623,6 +651,8 @@
       "WIDGET_BUILDER": "Widget Builder",
       "BOT_CONFIGURATION": "Bot Configuration",
       "ACCOUNT_HEALTH": "Account Health",
+      "WHATSAPP_TEMPLATES": "Templates",
+      "WHATSAPP_CONNECTION": "Connection",
       "CSAT": "CSAT"
     },
     "ACCOUNT_HEALTH": {

@@ -74,6 +74,9 @@ Rails.application.routes.draw do
             end
             resources :custom_tools
             resources :documents, only: [:index, :show, :create, :destroy]
+            resource :google_drive, only: [:show, :create, :destroy], controller: 'google_drive' do
+              post :sync
+            end
             resource :tasks, only: [], controller: 'tasks' do
               post :rewrite
               post :summarize
@@ -270,6 +273,47 @@ Rails.application.routes.draw do
 
           resources :inboxes, only: [] do
             resource :assignment_policy, only: [:show, :create, :destroy], module: :inboxes
+          end
+
+          resources :typebots, only: [:index, :create, :show, :destroy] do
+            member do
+              post :publish
+              post :assign
+              delete :unassign
+              get :editor
+            end
+            collection do
+              post :toggle_bot
+            end
+          end
+
+          scope :whatsapp_bridge, controller: :whatsapp_bridge do
+            get :instances
+            post :create_instance
+            post 'connect/:instance_name', action: :connect
+            get 'qr/:instance_name', action: :qr_code
+            get 'connection/:instance_name', action: :connection_state
+            post 'disconnect/:instance_name', action: :disconnect
+            delete 'delete/:instance_name', action: :delete_instance
+            post 'relink/:instance_name', action: :relink_instance
+            delete 'inbox/:inbox_id', action: :delete_inbox
+            post 'webhook/:identifier', action: :incoming_webhook
+            post 'outgoing/:instance_name', action: :outgoing_webhook
+
+            get 'instance_detail/:instance_name', action: :instance_detail
+            put 'update_instance/:instance_name', action: :update_instance
+            get 'anti_ban/:instance_name', action: :anti_ban
+            put 'anti_ban/:instance_name', action: :update_anti_ban
+            get 'behavior/:instance_name', action: :behavior
+            put 'behavior/:instance_name', action: :update_behavior
+            get 'profile/:instance_name', action: :profile
+            put 'profile_name/:instance_name', action: :update_profile_name
+            put 'profile_picture/:instance_name', action: :update_profile_picture
+            put 'profile_status/:instance_name', action: :update_profile_status
+            get 'handoff/:instance_name', action: :handoff
+            post 'handoff/:instance_name', action: :update_handoff
+            get 'handoff_settings/:instance_name', action: :handoff_settings
+            put 'handoff_settings/:instance_name', action: :update_handoff_settings
           end
 
           namespace :twitter do
@@ -633,6 +677,7 @@ Rails.application.routes.draw do
 
   get 'microsoft/callback', to: 'microsoft/callbacks#show'
   get 'google/callback', to: 'google/callbacks#show'
+  get 'google/drive/callback', to: 'google/drive_callbacks#show'
   get 'instagram/callback', to: 'instagram/callbacks#show'
   get 'tiktok/callback', to: 'tiktok/callbacks#show'
   get 'notion/callback', to: 'notion/callbacks#show'

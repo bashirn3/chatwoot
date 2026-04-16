@@ -30,6 +30,14 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
+import { defineAsyncComponent } from 'vue';
+
+const WhatsAppTemplatesTab = defineAsyncComponent(
+  () => import('../whatsappTemplates/Index.vue')
+);
+const WhatsAppConnectionTab = defineAsyncComponent(
+  () => import('../whatsappConnection/Index.vue')
+);
 
 export default {
   components: {
@@ -55,6 +63,8 @@ export default {
     Editor,
     Avatar,
     AccountHealth,
+    WhatsAppTemplatesTab,
+    WhatsAppConnectionTab,
   },
   mixins: [inboxMixin],
   setup() {
@@ -99,6 +109,15 @@ export default {
     },
     shouldShowWhatsAppConfiguration() {
       return this.isAWhatsAppCloudChannel;
+    },
+    isBaileysInbox() {
+      return (
+        this.isAPIInbox &&
+        !!(
+          this.inbox.additional_attributes?.whatsapp_bridge_instance_id ||
+          this.inbox.channel?.additional_attributes?.whatsapp_bridge_instance_id
+        )
+      );
     },
     whatsAppAPIProviderName() {
       if (this.isAWhatsAppCloudChannel) {
@@ -187,6 +206,20 @@ export default {
           {
             key: 'whatsapp-health',
             name: this.$t('INBOX_MGMT.TABS.ACCOUNT_HEALTH'),
+          },
+          {
+            key: 'whatsapp-templates',
+            name: this.$t('INBOX_MGMT.TABS.WHATSAPP_TEMPLATES'),
+          },
+        ];
+      }
+
+      if (this.isBaileysInbox) {
+        visibleToAllChannelTabs = [
+          ...visibleToAllChannelTabs,
+          {
+            key: 'whatsapp-connection',
+            name: this.$t('INBOX_MGMT.TABS.WHATSAPP_CONNECTION'),
           },
         ];
       }
@@ -946,6 +979,12 @@ export default {
       </div>
       <div v-if="selectedTabKey === 'whatsapp-health'">
         <AccountHealth :health-data="healthData" />
+      </div>
+      <div v-if="selectedTabKey === 'whatsapp-templates'">
+        <WhatsAppTemplatesTab embedded />
+      </div>
+      <div v-if="selectedTabKey === 'whatsapp-connection'">
+        <WhatsAppConnectionTab embedded />
       </div>
     </section>
   </div>

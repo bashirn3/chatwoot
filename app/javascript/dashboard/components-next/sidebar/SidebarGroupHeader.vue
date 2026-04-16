@@ -12,9 +12,21 @@ const props = defineProps({
   isActive: { type: Boolean, default: false },
   hasActiveChild: { type: Boolean, default: false },
   getterKeys: { type: Object, default: () => ({}) },
+  activeAccent: { type: String, default: '' },
 });
 
 const emit = defineEmits(['toggle']);
+
+const activeClasses = computed(() => {
+  return 'text-n-slate-12 bg-n-slate-3 dark:bg-n-slate-3/50 font-medium ltr:border-l-2 rtl:border-r-2 border-n-slate-9';
+});
+
+const activeStyle = computed(() => {
+  if (props.isActive && !props.hasActiveChild && props.activeAccent) {
+    return { borderColor: props.activeAccent };
+  }
+  return {};
+});
 
 const showBadge = useMapGetter(props.getterKeys.badge);
 const dynamicCount = useMapGetter(props.getterKeys.count);
@@ -26,16 +38,17 @@ const count = computed(() =>
 <template>
   <component
     :is="to ? 'router-link' : 'div'"
-    class="flex items-center gap-2 px-1.5 py-1 rounded-lg h-8 min-w-0"
+    class="flex items-center gap-2 px-1.5 py-1 rounded-lg h-8 min-w-0 transition-[background-color,color,border-color] duration-150 ease-out"
     role="button"
     draggable="false"
     :to="to"
     :title="label"
-    :class="{
-      'text-n-slate-12 bg-n-alpha-2 font-medium': isActive && !hasActiveChild,
-      'text-n-slate-12 font-medium': hasActiveChild,
-      'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
-    }"
+    :class="[
+      isActive && !hasActiveChild ? activeClasses : '',
+      hasActiveChild ? 'text-n-slate-12 font-medium' : '',
+      !isActive && !hasActiveChild ? 'text-n-slate-11 hover:bg-n-alpha-2' : '',
+    ]"
+    :style="activeStyle"
     @click.stop="emit('toggle')"
   >
     <div v-if="icon" class="relative flex items-center gap-2">

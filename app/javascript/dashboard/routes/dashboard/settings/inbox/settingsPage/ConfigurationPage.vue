@@ -78,17 +78,20 @@ export default {
     },
     async checkWabaSubscription() {
       if (!this.isAWhatsAppChannel || this.isATwilioChannel) return;
-      
+
       this.isCheckingSubscription = true;
       try {
-        const response = await WhatsappAccountStatusAPI.getSubscription(this.inbox.id);
+        const response = await WhatsappAccountStatusAPI.getSubscription(
+          this.inbox.id
+        );
         this.wabaSubscribed = response.data.subscribed;
         this.wabaSubscriptionAppName = response.data.app_name;
         this.wabaSubscriptionError = response.data.error;
         this.wabaId = response.data.waba_id;
       } catch (error) {
         console.error('Failed to check WABA subscription:', error);
-        this.wabaSubscriptionError = error.response?.data?.error || error.message;
+        this.wabaSubscriptionError =
+          error.response?.data?.error || error.message;
       } finally {
         this.isCheckingSubscription = false;
       }
@@ -96,7 +99,9 @@ export default {
     async subscribeWaba() {
       this.isSubscribing = true;
       try {
-        const response = await WhatsappAccountStatusAPI.subscribe(this.inbox.id);
+        const response = await WhatsappAccountStatusAPI.subscribe(
+          this.inbox.id
+        );
         if (response.data.success) {
           this.wabaSubscribed = true;
           this.wabaSubscriptionAppName = response.data.subscription?.app_name;
@@ -104,11 +109,15 @@ export default {
           useAlert(this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_SUCCESS'));
         } else {
           this.wabaSubscriptionError = response.data.error;
-          useAlert(response.data.error || this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_ERROR'));
+          useAlert(
+            response.data.error ||
+              this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_ERROR')
+          );
         }
       } catch (error) {
         console.error('Failed to subscribe WABA:', error);
-        this.wabaSubscriptionError = error.response?.data?.error || error.message;
+        this.wabaSubscriptionError =
+          error.response?.data?.error || error.message;
         useAlert(this.$t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBE_ERROR'));
       } finally {
         this.isSubscribing = false;
@@ -482,12 +491,21 @@ export default {
           >
             <div class="flex items-center gap-2">
               <span class="i-lucide-check-circle text-green-600 text-lg" />
-              <span class="text-sm text-green-800 dark:text-green-200 font-medium">
+              <span
+                class="text-sm text-green-800 dark:text-green-200 font-medium"
+              >
                 {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBED') }}
               </span>
             </div>
-            <p v-if="wabaSubscriptionAppName" class="text-xs text-green-700 dark:text-green-300 mt-1 ml-6">
-              {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBED_TO_APP', { appName: wabaSubscriptionAppName }) }}
+            <p
+              v-if="wabaSubscriptionAppName"
+              class="text-xs text-green-700 dark:text-green-300 mt-1 ml-6"
+            >
+              {{
+                $t('INBOX_MGMT.SETTINGS_POPUP.WABA_SUBSCRIBED_TO_APP', {
+                  appName: wabaSubscriptionAppName,
+                })
+              }}
             </p>
           </div>
 
@@ -498,7 +516,9 @@ export default {
           >
             <div class="flex items-center gap-2 mb-2">
               <span class="i-lucide-alert-triangle text-yellow-600 text-lg" />
-              <span class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
+              <span
+                class="text-sm text-yellow-800 dark:text-yellow-200 font-medium"
+              >
                 {{ $t('INBOX_MGMT.SETTINGS_POPUP.WABA_NOT_SUBSCRIBED') }}
               </span>
             </div>
@@ -508,7 +528,10 @@ export default {
             <p v-if="wabaId" class="text-xs text-n-slate-11 mb-2 ml-6">
               <strong>WABA ID:</strong> {{ wabaId }}
             </p>
-            <p v-if="wabaSubscriptionError" class="text-xs text-red-600 dark:text-red-400 mb-3 ml-6 whitespace-pre-wrap">
+            <p
+              v-if="wabaSubscriptionError"
+              class="text-xs text-red-600 dark:text-red-400 mb-3 ml-6 whitespace-pre-wrap"
+            >
               {{ wabaSubscriptionError }}
             </p>
             <div class="ml-6">

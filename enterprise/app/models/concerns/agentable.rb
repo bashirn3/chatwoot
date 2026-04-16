@@ -43,7 +43,8 @@ module Concerns::Agentable
   end
 
   def agent_model
-    InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_MODEL')&.value.presence || LlmConstants::DEFAULT_MODEL
+    InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_MODEL')&.value.presence ||
+      ENV.fetch('CAPTAIN_OPEN_AI_MODEL', nil).presence || LlmConstants::DEFAULT_MODEL
   end
 
   def agent_response_schema

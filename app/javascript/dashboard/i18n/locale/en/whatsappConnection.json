@@ -1,0 +1,118 @@
+{
+  "WHATSAPP_CONNECTION": {
+    "TITLE": "WhatsApp Connection",
+    "DESCRIPTION": "Connect your WhatsApp account by scanning a QR code or using a pairing code. Each connection creates a dedicated inbox that works alongside your other channels.",
+    "NOT_CONFIGURED": "WhatsApp Bridge is not configured.",
+    "NOT_CONFIGURED_HELP": "Set the WHATSAPP_BRIDGE_URL and WHATSAPP_BRIDGE_API_KEY environment variables pointing to your WhatsApp API service.",
+    "EMPTY": "No WhatsApp connections yet. Create one above to get started.",
+    "CREATE_SUCCESS": "WhatsApp instance created. Click Connect to scan the QR code.",
+    "CREATE_ERROR": "Failed to create instance. Please try again.",
+    "RELINK_SUCCESS": "Inbox created and linked to the instance.",
+    "RELINK_ERROR": "Failed to create inbox. Please try again.",
+    "CONNECT_ERROR": "Failed to connect. Please try again.",
+    "ALREADY_CONNECTED": "This instance is already connected.",
+    "CONNECTED": "WhatsApp connected successfully!",
+    "LOGOUT_SUCCESS": "Disconnected successfully.",
+    "LOGOUT_ERROR": "Failed to disconnect. Please try again.",
+    "DELETE_SUCCESS": "Instance and inbox deleted successfully.",
+    "DELETE_ERROR": "Failed to delete instance. Please try again.",
+    "ORPHANED": {
+      "TITLE": "Orphaned Inboxes",
+      "DESCRIPTION": "These inboxes were created but their bridge connection no longer exists. They can be safely deleted.",
+      "STATUS": "No bridge connection",
+      "CONVERSATIONS": "{count} conversations",
+      "DELETE_ALL": "Delete All",
+      "CLEAR_ALL_SUCCESS": "All orphaned inboxes deleted."
+    },
+    "NEW_INSTANCE": {
+      "TITLE": "New WhatsApp Connection",
+      "NAME_PLACEHOLDER": "Enter a name (e.g., sales, support)",
+      "CREATE": "Create"
+    },
+    "QR": {
+      "TITLE": "Link Your WhatsApp",
+      "INSTRUCTIONS": "Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → Scan this QR code or enter the pairing code",
+      "ALT": "WhatsApp QR Code",
+      "PAIRING_CODE": "Or enter this pairing code on your phone:",
+      "WAITING": "Waiting for connection..."
+    },
+    "INSTANCES": {
+      "TITLE": "Your WhatsApp Connections",
+      "CONNECT": "Connect",
+      "CONNECT_QR": "QR Code",
+      "CONNECT_PAIRING": "Phone Code",
+      "PAIRING_PHONE_PLACEHOLDER": "3001234567",
+      "LOGOUT": "Disconnect",
+      "DELETE": "Delete",
+      "SETTINGS": "Settings",
+      "NO_INBOX": "Missing inbox — messages won't be received",
+      "RELINK": "Create Inbox"
+    },
+    "SETTINGS": {
+      "TITLE": "Instance Settings",
+      "LOADING": "Loading settings...",
+      "SAVE": "Save",
+      "SAVED": "Settings saved successfully.",
+      "SAVE_ERROR": "Failed to save settings.",
+      "PROFILE": {
+        "TITLE": "Profile",
+        "NAME": "Display Name",
+        "NAME_PLACEHOLDER": "Your WhatsApp display name",
+        "STATUS": "Status Text",
+        "STATUS_PLACEHOLDER": "Hey there! I am using WhatsApp.",
+        "PICTURE_URL": "Profile Picture URL",
+        "PICTURE_URL_PLACEHOLDER": "https://example.com/avatar.jpg",
+        "PHONE": "Phone Number",
+        "UPDATE_NAME": "Update Name",
+        "UPDATE_STATUS": "Update Status",
+        "UPDATE_PICTURE": "Update Picture"
+      },
+      "BEHAVIOR": {
+        "TITLE": "Behavior",
+        "TYPING_SIMULATION": "Simulate Typing",
+        "TYPING_SIMULATION_HELP": "Show \"typing...\" indicator before sending messages",
+        "DELAY_ENABLED": "Message Delay",
+        "DELAY_ENABLED_HELP": "Add a natural delay before each message"
+      },
+      "ANTI_BAN": {
+        "TITLE": "Anti-Ban",
+        "PRESET": "Preset",
+        "PRESET_SAFE": "Safe",
+        "PRESET_MODERATE": "Moderate",
+        "PRESET_AGGRESSIVE": "Aggressive",
+        "MESSAGES_PER_HOUR": "Messages Per Hour",
+        "MESSAGES_PER_HOUR_HELP": "Maximum messages this instance can send per hour"
+      },
+      "HANDOFF": {
+        "TITLE": "Handoff",
+        "RESUME_KEYWORDS": "Resume Keywords",
+        "RESUME_KEYWORDS_HELP": "Comma-separated keywords that resume bot interaction after human handoff",
+        "RESUME_KEYWORDS_PLACEHOLDER": "bot, resume, start",
+        "RESUME_MESSAGE": "Resume Message",
+        "RESUME_MESSAGE_HELP": "Message sent when bot resumes after handoff",
+        "RESUME_MESSAGE_PLACEHOLDER": "Bot is back! How can I help?",
+        "ACTIVE_CHATS": "Active Handoffs",
+        "ACTIVE_CHATS_HELP": "Chats where the bot is paused and a human is handling the conversation. Toggle to resume bot.",
+        "NO_ACTIVE_CHATS": "No active handoffs. The bot is handling all conversations.",
+        "RESUME_BOT": "Resume Bot",
+        "RESUME_ALL": "Resume Bot for All",
+        "TAGGED_AT": "Since",
+        "CLEAR_SUCCESS": "Bot resumed for this chat.",
+        "CLEAR_ALL_SUCCESS": "Bot resumed for all chats.",
+        "CLEAR_ERROR": "Failed to update handoff status."
+      },
+      "LINKED_INBOX": {
+        "TITLE": "Linked Inbox",
+        "DESCRIPTION": "This instance is connected to a Chatwoot inbox that handles messages from this WhatsApp number.",
+        "NAME": "Inbox Name"
+      },
+      "WEBHOOKS": {
+        "TITLE": "Webhooks",
+        "DESCRIPTION": "Configure a custom webhook URL to receive all incoming WhatsApp messages alongside Chatwoot. Use this to connect external automation tools like Typebot, n8n, Make.com, or your own API.",
+        "CUSTOM_URL": "Custom Webhook URL",
+        "CUSTOM_URL_HELP": "When set, incoming WhatsApp messages will also be forwarded to this URL in addition to Chatwoot.",
+        "CUSTOM_URL_PLACEHOLDER": "https://your-automation.example.com/webhook"
+      }
+    }
+  }
+}

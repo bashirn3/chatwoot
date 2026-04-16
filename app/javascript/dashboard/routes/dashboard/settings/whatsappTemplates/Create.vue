@@ -13,17 +13,18 @@ const { t } = useI18n();
 const submitForApprovalImmediately = ref(true);
 const selectedChannels = ref([]);
 
-const channels = computed(() => store.getters['whatsappTemplates/getChannels'] || []);
+const channels = computed(
+  () => store.getters['whatsappTemplates/getChannels'] || []
+);
 
 onMounted(async () => {
   await store.dispatch('whatsappTemplates/fetchChannels');
-  // Select all channels by default
   if (channels.value.length > 0) {
     selectedChannels.value = channels.value.map(c => c.id);
   }
 });
 
-const toggleChannel = (channelId) => {
+const toggleChannel = channelId => {
   const index = selectedChannels.value.indexOf(channelId);
   if (index === -1) {
     selectedChannels.value.push(channelId);
@@ -40,41 +41,62 @@ const deselectAllChannels = () => {
   selectedChannels.value = [];
 };
 
-const handleSubmit = async (templateData) => {
+const handleSubmit = async templateData => {
   try {
-    // Assign first selected channel as primary
     if (selectedChannels.value.length > 0) {
       templateData.channel_whatsapp_id = selectedChannels.value[0];
     }
-    
-    const created = await store.dispatch('whatsappTemplates/createTemplate', templateData);
-    
-    // Redirect immediately after creation
+
+    const created = await store.dispatch(
+      'whatsappTemplates/createTemplate',
+      templateData
+    );
+
     useAlert(t('WHATSAPP_TEMPLATES.CREATE_SUCCESS'));
     router.push({ name: 'settings_whatsapp_templates' });
-    
-    // Submit to channels in background (non-blocking)
-    if (submitForApprovalImmediately.value && created?.id && selectedChannels.value.length > 0) {
-      store.dispatch('whatsappTemplates/submitToChannels', {
-        templateId: created.id,
-        channelIds: selectedChannels.value
-      }).then(result => {
-        const successCount = result.results?.filter(r => r.success).length || 0;
-        const failCount = result.results?.filter(r => !r.success).length || 0;
-        
-        if (failCount === 0) {
-          useAlert(t('WHATSAPP_TEMPLATES.SUBMIT_TO_CHANNELS_SUCCESS', { count: successCount }));
-        } else {
-          useAlert(t('WHATSAPP_TEMPLATES.SUBMIT_TO_CHANNELS_PARTIAL', { success: successCount, failed: failCount }));
-        }
-        // Refresh templates list
-        store.dispatch('whatsappTemplates/fetchTemplates');
-      }).catch(submitError => {
-        useAlert(submitError.response?.data?.error || submitError.message || t('WHATSAPP_TEMPLATES.SUBMIT_ERROR'));
-      });
+
+    if (
+      submitForApprovalImmediately.value &&
+      created?.id &&
+      selectedChannels.value.length > 0
+    ) {
+      store
+        .dispatch('whatsappTemplates/submitToChannels', {
+          templateId: created.id,
+          channelIds: selectedChannels.value,
+        })
+        .then(result => {
+          const successCount =
+            result.results?.filter(r => r.success).length || 0;
+          const failCount = result.results?.filter(r => !r.success).length || 0;
+
+          if (failCount === 0) {
+            useAlert(
+              t('WHATSAPP_TEMPLATES.SUBMIT_TO_CHANNELS_SUCCESS', {
+                count: successCount,
+              })
+            );
+          } else {
+            useAlert(
+              t('WHATSAPP_TEMPLATES.SUBMIT_TO_CHANNELS_PARTIAL', {
+                success: successCount,
+                failed: failCount,
+              })
+            );
+          }
+          store.dispatch('whatsappTemplates/fetchTemplates');
+        })
+        .catch(submitError => {
+          useAlert(
+            submitError.response?.data?.error ||
+              submitError.message ||
+              t('WHATSAPP_TEMPLATES.SUBMIT_ERROR')
+          );
+        });
     }
   } catch (error) {
-    const errorMessage = error.response?.data?.errors?.join(', ') || error.message;
+    const errorMessage =
+      error.response?.data?.errors?.join(', ') || error.message;
     useAlert(errorMessage || t('WHATSAPP_TEMPLATES.CREATE_ERROR'));
   }
 };
@@ -87,82 +109,91 @@ const handleCancel = () => {
 <template>
   <div class="flex-1 overflow-auto p-6">
     <!-- Channel Selection -->
-    <div class="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+    <div class="mb-4 p-4 bg-n-alpha-black2 border border-n-weak rounded-xl">
       <div class="flex justify-between items-center mb-3">
-        <h3 class="text-sm font-medium text-slate-700">
+        <h3 class="text-sm font-medium text-n-slate-12">
           {{ $t('WHATSAPP_TEMPLATES.SELECT_CHANNELS') }}
         </h3>
         <div class="flex gap-2">
-          <button 
+          <button
             type="button"
-            class="text-xs text-woot-600 hover:text-woot-700"
+            class="text-xs text-woot-600 dark:text-woot-400 hover:text-woot-700 dark:hover:text-woot-300"
             @click="selectAllChannels"
           >
             {{ $t('WHATSAPP_TEMPLATES.SELECT_ALL') }}
           </button>
-          <span class="text-slate-300">|</span>
-          <button 
+          <span class="text-n-slate-10">|</span>
+          <button
             type="button"
-            class="text-xs text-slate-500 hover:text-slate-700"
+            class="text-xs text-n-slate-11 hover:text-n-slate-12"
             @click="deselectAllChannels"
           >
             {{ $t('WHATSAPP_TEMPLATES.DESELECT_ALL') }}
           </button>
         </div>
       </div>
-      
-      <div v-if="channels.length === 0" class="text-sm text-slate-500">
+
+      <div v-if="channels.length === 0" class="text-sm text-n-slate-11">
         {{ $t('WHATSAPP_TEMPLATES.NO_CHANNELS_FOUND') }}
       </div>
-      
+
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        <label 
-          v-for="channel in channels" 
+        <label
+          v-for="channel in channels"
           :key="channel.id"
-          class="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer transition-all"
-          :class="selectedChannels.includes(channel.id) 
-            ? 'border-woot-500 bg-woot-50' 
-            : 'border-slate-200 hover:border-slate-300'"
+          class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+          :class="
+            selectedChannels.includes(channel.id)
+              ? 'border-woot-500 bg-woot-50 dark:bg-woot-900/20'
+              : 'border-n-weak bg-white dark:bg-n-solid-2 hover:border-n-slate-6'
+          "
         >
           <input
             type="checkbox"
             :checked="selectedChannels.includes(channel.id)"
-            class="rounded border-slate-300 text-woot-600 focus:ring-woot-500"
+            class="rounded border-n-weak text-woot-600 focus:ring-woot-500"
             @change="toggleChannel(channel.id)"
           />
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-slate-800 truncate">{{ channel.name }}</p>
-            <p class="text-xs text-slate-500">{{ channel.phone_number }}</p>
+            <p class="text-sm font-medium text-n-slate-12 truncate">
+              {{ channel.name }}
+            </p>
+            <p class="text-xs text-n-slate-11">{{ channel.phone_number }}</p>
           </div>
         </label>
       </div>
-      
-      <p class="text-xs text-slate-500 mt-3">
+
+      <p class="text-xs text-n-slate-11 mt-3">
         {{ $t('WHATSAPP_TEMPLATES.SELECT_CHANNELS_HELP') }}
       </p>
     </div>
 
     <!-- Submit for approval option -->
-    <div class="mb-4 p-4 bg-woot-50 border border-woot-200 rounded-xl">
+    <div
+      class="mb-4 p-4 bg-woot-50 dark:bg-woot-900/20 border border-woot-200 dark:border-woot-700 rounded-xl"
+    >
       <label class="flex items-center gap-2 cursor-pointer">
         <input
           v-model="submitForApprovalImmediately"
           type="checkbox"
-          class="rounded border-slate-300 text-woot-600 focus:ring-woot-500"
+          class="rounded border-n-weak text-woot-600 focus:ring-woot-500"
           :disabled="selectedChannels.length === 0"
         />
-        <span class="text-sm font-medium text-slate-700">
+        <span class="text-sm font-medium text-n-slate-12">
           {{ $t('WHATSAPP_TEMPLATES.SUBMIT_FOR_APPROVAL_AFTER_CREATE') }}
         </span>
       </label>
-      <p class="text-xs text-slate-500 mt-1 ml-6">
-        {{ selectedChannels.length > 1 
-          ? $t('WHATSAPP_TEMPLATES.SUBMIT_TO_MULTIPLE_CHANNELS_HELP', { count: selectedChannels.length })
-          : $t('WHATSAPP_TEMPLATES.SUBMIT_FOR_APPROVAL_AFTER_CREATE_HELP') 
+      <p class="text-xs text-n-slate-11 mt-1 ml-6">
+        {{
+          selectedChannels.length > 1
+            ? $t('WHATSAPP_TEMPLATES.SUBMIT_TO_MULTIPLE_CHANNELS_HELP', {
+                count: selectedChannels.length,
+              })
+            : $t('WHATSAPP_TEMPLATES.SUBMIT_FOR_APPROVAL_AFTER_CREATE_HELP')
         }}
       </p>
     </div>
-    
+
     <TemplateBuilder
       mode="create"
       @submit="handleSubmit"

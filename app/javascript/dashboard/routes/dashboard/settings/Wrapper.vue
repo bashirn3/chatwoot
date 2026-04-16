@@ -35,10 +35,12 @@ const showSettingsHeader = computed(
       />
 
       <router-view v-slot="{ Component }" class="px-5 flex-1 overflow-hidden">
-        <component :is="Component" v-if="!keepAlive" :key="$route.fullPath" />
-        <keep-alive v-else>
-          <component :is="Component" :key="$route.fullPath" />
-        </keep-alive>
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" v-if="!keepAlive" :key="$route.fullPath" />
+          <keep-alive v-else>
+            <component :is="Component" :key="$route.fullPath" />
+          </keep-alive>
+        </transition>
       </router-view>
     </div>
   </div>

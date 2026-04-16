@@ -1,0 +1,12 @@
+{
+  "BOT_EDITOR": {
+    "TITLE": "Bot Flow Editor",
+    "DESCRIPTION": "Design and edit your automated conversation flows visually.",
+    "LOADING": "Loading bot editor...",
+    "OPEN_EXTERNAL": "Open in new tab",
+    "NO_ROUTER_HOOK": "No Bot Router integration found. Configure it in Settings > Integrations first.",
+    "NO_HOOK_FOR_INBOX": "No Bot Router configured for this inbox.",
+    "MISSING_CONFIG": "Typebot URL or Public ID is not configured in the Bot Router settings.",
+    "LOAD_ERROR": "Failed to load the bot editor. Please check your configuration."
+  }
+}

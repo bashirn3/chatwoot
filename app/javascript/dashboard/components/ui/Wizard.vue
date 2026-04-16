@@ -36,21 +36,22 @@ const steps = computed(() =>
     <div
       v-for="step in steps"
       :key="step.route"
-      class="cursor-pointer flex items-start gap-6 relative after:content-[''] after:absolute after:w-0.5 after:h-full after:top-5 ltr:after:left-4 rtl:after:right-4 before:content-[''] before:absolute before:w-0.5 before:h-4 before:top-0 before:left-4 rtl:before:right-4 last:after:hidden last:before:hidden after:bg-n-slate-3 before:bg-n-slate-3"
+      class="cursor-pointer flex items-start gap-6 relative after:content-[''] after:absolute after:w-0.5 after:h-full after:top-5 ltr:after:left-4 rtl:after:right-4 before:content-[''] before:absolute before:w-0.5 before:h-4 before:top-0 before:left-4 rtl:before:right-4 last:after:hidden last:before:hidden after:bg-n-slate-5 before:bg-n-slate-5"
     >
       <!-- Circle -->
       <div
-        class="rounded-2xl flex-shrink-0 size-8 border-2 border-n-slate-3 flex items-center justify-center left-2 leading-4 z-10 top-5 transition-all duration-300 ease-in-out"
+        class="rounded-2xl flex-shrink-0 size-8 border-2 flex items-center justify-center left-2 leading-4 z-10 top-5 transition-[background-color,border-color] duration-300 ease-in-out"
         :class="{
-          'bg-n-slate-3': step.isActive || step.isOver,
-          'bg-n-background': !step.isActive && !step.isOver,
+          'bg-n-blue-9 border-n-blue-9': step.isActive,
+          'bg-n-teal-9/15 border-n-teal-9/40': step.isOver,
+          'bg-n-solid-2 border-n-slate-6': !step.isActive && !step.isOver,
         }"
       >
         <span
           v-if="!step.isOver"
           :key="'num-' + step.index"
           class="text-xs font-bold transition-colors duration-300"
-          :class="step.isActive ? 'text-n-blue-11' : 'text-n-slate-11'"
+          :class="step.isActive ? 'text-white' : 'text-n-slate-12'"
         >
           {{ step.index + 1 }}
         </span>
@@ -58,7 +59,7 @@ const steps = computed(() =>
           v-else
           :key="'check-' + step.index"
           icon="i-lucide-check"
-          class="text-n-slate-11 size-4"
+          class="text-n-teal-9 size-4"
         />
       </div>
 
@@ -67,7 +68,7 @@ const steps = computed(() =>
         <div class="flex items-center">
           <h3
             class="text-sm font-medium overflow-hidden whitespace-nowrap mt-0.5 text-ellipsis leading-tight"
-            :class="step.isActive ? 'text-n-blue-11' : 'text-n-slate-12'"
+            :class="step.isActive ? 'text-n-slate-12' : 'text-n-slate-12'"
           >
             {{ step.title }}
           </h3>

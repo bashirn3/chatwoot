@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  chatwoot-rails:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: chatwoot-whitelabel:latest
+    restart: always
+    ports:
+      - '3000:3000'
+    env_file: .env
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+      - WHATSAPP_BRIDGE_URL=${WHATSAPP_BRIDGE_URL:-https://wasup.northeurope.cloudapp.azure.com}
+      - WHATSAPP_BRIDGE_API_KEY=${WHATSAPP_BRIDGE_API_KEY:-change-me}
+    depends_on:
+      - postgres
+      - redis
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+
+  chatwoot-sidekiq:
+    image: chatwoot-whitelabel:latest
+    restart: always
+    env_file: .env
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    restart: always
+    ports:
+      - '127.0.0.1:3101:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-}@postgres:5432/typebot
+      - NEXTAUTH_URL=${TYPEBOT_BUILDER_URL:-http://localhost:3001}
+      - NEXTAUTH_URL_INTERNAL=http://typebot-builder:3000
+      - NEXT_PUBLIC_VIEWER_URL=${TYPEBOT_VIEWER_URL:-http://localhost:3002}
+      - ENCRYPTION_SECRET=${TYPEBOT_ENCRYPTION_SECRET:-change-me-32-chars-minimum-secret}
+      - ADMIN_EMAIL=${TYPEBOT_ADMIN_EMAIL:-admin@yourbrand.com}
+      - SMTP_AUTH_DISABLED=true
+      - DISABLE_SIGNUP=true
+    depends_on:
+      - postgres
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    restart: always
+    ports:
+      - '127.0.0.1:3102:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-}@postgres:5432/typebot
+      - NEXTAUTH_URL=${TYPEBOT_BUILDER_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_VIEWER_URL=${TYPEBOT_VIEWER_URL:-http://localhost:3002}
+      - ENCRYPTION_SECRET=${TYPEBOT_ENCRYPTION_SECRET:-change-me-32-chars-minimum-secret}
+    depends_on:
+      - postgres
+
+  whatsapp-bridge:
+    build:
+      context: ./whatsapp-ai-framework/app
+      dockerfile: Dockerfile
+    image: whatsapp-bridge:latest
+    restart: always
+    ports:
+      - '3003:3000'
+    volumes:
+      - whatsapp_instances:/app/instances
+    environment:
+      - PORT=3000
+      - API_KEY=${WHATSAPP_BRIDGE_API_KEY:-change-me}
+      - ADMIN_PASSWORD=${WHATSAPP_BRIDGE_ADMIN_PASSWORD:-}
+    depends_on:
+      - redis
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: always
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_DB=chatwoot_production
+
+  redis:
+    image: redis:alpine
+    restart: always
+    command: ["sh", "-c", "redis-server --requirepass \"$REDIS_PASSWORD\""]
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+
+volumes:
+  postgres_data:
+  redis_data:
+  whatsapp_instances:

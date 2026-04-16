@@ -105,7 +105,11 @@ const actions = {
       commit('SET_CURRENT_CHANNEL_STATUS', response.data.status);
       commit('SET_CURRENT_CHANNEL_EVENTS', {
         events: response.data.recent_events,
-        meta: { current_page: 1, total_pages: 1, total_count: response.data.recent_events.length }
+        meta: {
+          current_page: 1,
+          total_pages: 1,
+          total_count: response.data.recent_events.length,
+        },
       });
       return response.data;
     } catch (error) {
@@ -130,7 +134,9 @@ const actions = {
   async fetchChannelEvents({ commit }, { inboxId, page = 1 }) {
     commit('SET_UI_FLAG', { flag: 'isFetchingEvents', value: true });
     try {
-      const response = await WhatsappAccountStatusAPI.getEvents(inboxId, { page });
+      const response = await WhatsappAccountStatusAPI.getEvents(inboxId, {
+        page,
+      });
       if (page === 1) {
         commit('SET_CURRENT_CHANNEL_EVENTS', response.data);
       } else {

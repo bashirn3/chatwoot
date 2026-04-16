@@ -13,10 +13,12 @@ defineProps({
   >
     <div class="flex items-start w-full max-w-6xl mx-auto">
       <router-view v-slot="{ Component }">
-        <keep-alive v-if="keepAlive">
-          <component :is="Component" />
-        </keep-alive>
-        <component :is="Component" v-else />
+        <transition name="page-fade" mode="out-in">
+          <keep-alive v-if="keepAlive">
+            <component :is="Component" :key="$route.path" />
+          </keep-alive>
+          <component :is="Component" v-else :key="$route.path" />
+        </transition>
       </router-view>
     </div>
   </div>

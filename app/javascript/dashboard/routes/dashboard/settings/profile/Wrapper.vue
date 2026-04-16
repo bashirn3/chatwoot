@@ -12,10 +12,12 @@ defineProps({
     class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1"
   >
     <router-view v-slot="{ Component }">
-      <keep-alive v-if="keepAlive">
-        <component :is="Component" />
-      </keep-alive>
-      <component :is="Component" v-else />
+      <transition name="page-fade" mode="out-in">
+        <keep-alive v-if="keepAlive">
+          <component :is="Component" />
+        </keep-alive>
+        <component :is="Component" v-else />
+      </transition>
     </router-view>
   </div>
 </template>

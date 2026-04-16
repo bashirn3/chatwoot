@@ -28,13 +28,41 @@
     "FOOTER_PLACEHOLDER": "e.g., Reply STOP to unsubscribe",
     "BUTTONS": "Buttons (Optional)",
     "VARIABLE_EXAMPLES": "Variable Examples",
+    "VARIABLE_EXAMPLES_DESC": "Provide example values for each variable. These are used for template approval and preview.",
+    "VARIABLE_EXAMPLE_PLACEHOLDER": "Enter example for variable {index}",
+    "VARIABLE_HELP_LINK": "How do variables work?",
+    "VARIABLE_HELP_TITLE": "Understanding Variables",
+    "VARIABLE_HELP_DESC": "Variables are placeholders in your template that get replaced with actual values when sending messages. WhatsApp uses numbered placeholders like {{1}}, {{2}}, etc.",
+    "VARIABLE_HELP_EXAMPLE": "Example: \"Hi {{1}}, your order {{2}} is ready!\" becomes \"Hi John, your order #12345 is ready!\"",
+    "VARIABLE_HELP_INSERT": "Click a variable below to insert it:",
     "TIPS_TITLE": "Template Tips",
     "LOAD_SAMPLE": "Load Sample",
     "SAMPLE_TEMPLATES": "Sample Templates",
     "SAMPLE_LOADED": "Sample template loaded",
+    "NO_SAMPLES": "No sample templates available",
     "CREATE": "Create Template",
     "SAVE": "Save Changes",
     "CANCEL": "Cancel",
+    "CLOSE": "Close",
+    "PREVIEW": "Preview",
+    "CHARACTERS": "characters",
+    "CHAR_COUNT": "{current}/{max} characters",
+    "ADD_VARIABLE": "+ Variable",
+    "ADD_BODY_VARIABLE": "+ Add Variable",
+    "QUICK_FILL": "Quick fill...",
+    "MAX_BUTTONS": "Maximum 3 buttons allowed",
+    "BUTTON_TEXT_PLACEHOLDER": "Button text",
+    "URL_PLACEHOLDER": "https://example.com",
+    "PHONE_PLACEHOLDER": "+1234567890",
+    "BUTTON_DEFAULT": "Button",
+    "MEDIA_HEADER_TITLE": "{type} Header",
+    "MEDIA_SAMPLE_URL": "Enter a sample URL for the media file",
+    "MEDIA_SAMPLE_NOTE": "When sending, you'll provide the actual media URL. This is just a sample for template approval.",
+    "SUBMITTED": "Submitted",
+    "CREATED": "Created",
+    "PREVIOUS": "Previous",
+    "NEXT": "Next",
+    "PAGE_INFO": "Page {current} of {total}",
     "CREATE_SUCCESS": "Template created successfully",
     "CREATE_AND_SUBMIT_SUCCESS": "Template created and submitted for approval. You'll be notified when Meta reviews it.",
     "CREATE_ERROR": "Failed to create template",
@@ -62,6 +90,7 @@
     "DUPLICATE_ERROR": "Failed to duplicate template",
     "FETCH_ERROR": "Failed to load template",
     "VALIDATION_ERROR": "Please fix the errors before submitting",
+    "SAVE_ERROR": "Failed to save template",
     "SELECT_CHANNELS": "Select WhatsApp Channels",
     "SELECT_CHANNELS_HELP": "Choose which WhatsApp Business accounts to submit this template to. Each account requires separate Meta approval.",
     "SELECT_ALL": "Select all",
@@ -70,6 +99,46 @@
     "SUBMIT_TO_MULTIPLE_CHANNELS_HELP": "Template will be submitted for approval to {count} WhatsApp Business accounts.",
     "SUBMIT_TO_CHANNELS_SUCCESS": "Template submitted to {count} channel(s) for approval",
     "SUBMIT_TO_CHANNELS_PARTIAL": "Submitted to {success} channel(s), {failed} failed. Check template list for details.",
+    "CATEGORIES": {
+      "UTILITY": "Utility",
+      "MARKETING": "Marketing",
+      "AUTHENTICATION": "Authentication"
+    },
+    "HEADER_TYPES": {
+      "NONE": "None",
+      "TEXT": "Text",
+      "IMAGE": "Image",
+      "VIDEO": "Video",
+      "DOCUMENT": "Document",
+      "LOCATION": "Location"
+    },
+    "BUTTON_TYPES": {
+      "QUICK_REPLY": "Quick Reply",
+      "URL": "URL Button",
+      "PHONE_NUMBER": "Phone Number"
+    },
+    "STATUS": {
+      "DRAFT": "Draft",
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "PAUSED": "Paused"
+    },
+    "FILTERS": {
+      "ALL_STATUS": "All Status",
+      "ALL_CATEGORIES": "All Categories",
+      "ALL_CHANNELS": "All Channels"
+    },
+    "LOCATION": {
+      "LATITUDE": "Latitude",
+      "LATITUDE_PLACEHOLDER": "e.g., 37.7749",
+      "LONGITUDE": "Longitude",
+      "LONGITUDE_PLACEHOLDER": "e.g., -122.4194",
+      "NAME": "Location Name",
+      "NAME_PLACEHOLDER": "e.g., Our Office",
+      "ADDRESS": "Address",
+      "ADDRESS_PLACEHOLDER": "e.g., 123 Main St, City, Country"
+    },
     "MODAL": {
       "TITLE": "Whatsapp Templates",
       "SUBTITLE": "Select the whatsapp template you want to send",
@@ -112,6 +181,14 @@
       "MEDIA_URL_LABEL": "Enter {type} URL",
       "DOCUMENT_NAME_PLACEHOLDER": "Enter document filename (e.g., Invoice_2025.pdf)",
       "BUTTON_PARAMETER": "Enter button parameter"
+    },
+    "VARIABLE_MAPPER": {
+      "TITLE": "Map Variables to Contact Fields",
+      "DESCRIPTION": "Map each template variable to a contact field for per-recipient personalization, or type a static value that will be the same for everyone.",
+      "SELECT_FIELD": "Select a contact field...",
+      "USE_STATIC": "Use static value instead",
+      "USE_FIELD": "Map to contact field instead",
+      "STATIC_PLACEHOLDER": "Enter static value for {variable}"
     }
   }
 }

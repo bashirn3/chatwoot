@@ -101,13 +101,13 @@ const STYLE_CONFIG = {
   colors: {
     blue: {
       solid:
-        'bg-n-brand text-white hover:enabled:brightness-110 focus-visible:brightness-110 outline-transparent',
+        'bg-n-slate-12 text-n-slate-1 hover:enabled:opacity-90 focus-visible:opacity-90 outline-transparent',
       faded:
-        'bg-n-brand/10 text-n-blue-11 hover:enabled:bg-n-brand/20 focus-visible:bg-n-brand/20 outline-transparent',
-      outline: 'text-n-blue-11 outline-n-brand',
+        'bg-n-brand/10 text-n-brand hover:enabled:bg-n-brand/20 focus-visible:bg-n-brand/20 outline-transparent',
+      outline: 'text-n-brand outline-n-brand',
       ghost:
-        'text-n-blue-11 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
-      link: 'text-n-blue-11 hover:enabled:underline focus-visible:underline outline-transparent',
+        'text-n-brand hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
+      link: 'text-n-brand hover:enabled:underline focus-visible:underline outline-transparent',
     },
     ruby: {
       solid:
@@ -181,17 +181,17 @@ const STYLE_CONFIG = {
     lg: 'text-base',
   },
   clickAnimation: {
-    xs: 'active:enabled:scale-[0.97]',
-    sm: 'active:enabled:scale-[0.97]',
-    md: 'active:enabled:scale-[0.98]',
-    lg: 'active:enabled:scale-[0.98]',
+    xs: 'active:enabled:scale-[0.96] active:enabled:duration-75',
+    sm: 'active:enabled:scale-[0.96] active:enabled:duration-75',
+    md: 'active:enabled:scale-[0.97] active:enabled:duration-75',
+    lg: 'active:enabled:scale-[0.97] active:enabled:duration-75',
   },
   justify: {
     start: 'justify-start',
     center: 'justify-center',
     end: 'justify-end',
   },
-  base: 'inline-flex items-center min-w-0 gap-2 transition-all duration-100 ease-out border-0 rounded-lg outline-1 outline disabled:opacity-50',
+  base: 'inline-flex items-center min-w-0 gap-2 transition-[color,background-color,border-color,opacity,box-shadow,transform] duration-150 ease-out border-0 rounded-lg outline-1 outline disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-n-blue-9/20',
 };
 
 const variantClasses = computed(() => {

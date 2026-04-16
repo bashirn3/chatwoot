@@ -18,5 +18,5 @@
 - name: PRIVACY_URL
   value: 'https://www.chatwoot.com/privacy-policy'
 - name: DISPLAY_MANIFEST
-  value: true
+  value: false
 # ------- End of Branding Related Config ------- #

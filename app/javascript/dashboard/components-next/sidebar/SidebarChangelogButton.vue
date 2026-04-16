@@ -32,10 +32,10 @@ const closePopover = () => {
       @click="toggleOpen()"
     />
 
-    <!-- Always render card so it can fetch data, control visibility with v-show -->
     <div
       v-show="isOpen && hasArticles"
-      class="absolute ltr:left-full rtl:right-full bottom-0 ltr:ml-4 rtl:mr-4 z-40 bg-transparent w-52"
+      class="absolute ltr:left-full rtl:right-full bottom-0 ltr:ml-4 rtl:mr-4 z-40 bg-transparent w-52 transition-[opacity,transform] duration-200 ease-out"
+      :class="isOpen && hasArticles ? 'opacity-100 translate-x-0' : 'opacity-0 ltr:-translate-x-2 rtl:translate-x-2'"
     >
       <SidebarChangelogCard
         ref="changelogCard"

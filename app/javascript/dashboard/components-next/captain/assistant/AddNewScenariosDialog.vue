@@ -140,11 +140,13 @@ const onClickCancel = () => {
         <Button
           variant="faded"
           color="slate"
+          type="button"
           :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CANCEL')"
           class="w-full bg-n-alpha-2 !text-n-blue-11 hover:bg-n-alpha-3"
           @click="onClickCancel"
         />
         <Button
+          type="button"
           :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.ADD.NEW.FORM.CREATE')"
           class="w-full"
           @click="onClickAdd"

@@ -42,16 +42,17 @@ const openLink = link => {
       @click="togglePopup(!isPopupVisible)"
     />
 
-    <div
-      v-if="isPopupVisible"
-      v-on-click-outside="[
-        () => isPopupVisible && (isPopupVisible = false),
-        { ignore: ['#togglePopup'] },
-      ]"
-    >
-      <section
-        class="absolute top-full mt-6 ltr:left-0 rtl:right-0 outline outline-1 outline-n-weak bg-n-alpha-3 backdrop-blur-[100px] rounded-xl p-4 w-80"
+    <Transition name="dropdown-pop">
+      <div
+        v-if="isPopupVisible"
+        v-on-click-outside="[
+          () => isPopupVisible && (isPopupVisible = false),
+          { ignore: ['#togglePopup'] },
+        ]"
       >
+        <section
+          class="absolute top-full mt-6 ltr:left-0 rtl:right-0 outline outline-1 outline-n-weak bg-n-alpha-3 backdrop-blur-[100px] rounded-xl p-4 w-80"
+        >
         <div
           class="absolute -top-[0.77rem] ltr:left-12 rtl:right-12 w-6 h-6 ltr:rotate-45 rtl:-rotate-45 rtl:rounded-tr ltr:rounded-tl rtl:border-r ltr:border-l border-t border-n-weak bg-n-alpha-3 z-10"
         />
@@ -121,6 +122,7 @@ const openLink = link => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </Transition>
   </div>
 </template>

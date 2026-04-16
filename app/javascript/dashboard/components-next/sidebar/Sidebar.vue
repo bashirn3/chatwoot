@@ -374,6 +374,14 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Workflows',
+      icon: 'i-lucide-workflow',
+      label: t('SIDEBAR.WORKFLOWS'),
+      activeOn: ['settings_bots'],
+      to: accountScopedRoute('settings_bots'),
+      activeAccent: '#ff5924',
+    },
+    {
       name: 'Contacts',
       label: t('SIDEBAR.CONTACTS'),
       icon: 'i-lucide-contact',
@@ -571,12 +579,6 @@ const menuItems = computed(() => {
           icon: 'i-lucide-briefcase',
           to: accountScopedRoute('general_settings_index'),
         },
-        // {
-        //   name: 'Settings Captain',
-        //   label: t('SIDEBAR.CAPTAIN_AI'),
-        //   icon: 'i-woot-captain',
-        //   to: accountScopedRoute('captain_settings_index'),
-        // },
         {
           name: 'Settings Agents',
           label: t('SIDEBAR.AGENTS'),
@@ -602,18 +604,6 @@ const menuItems = computed(() => {
           to: accountScopedRoute('settings_inbox_list'),
         },
         {
-          name: 'Settings WhatsApp Templates',
-          label: t('SIDEBAR.WHATSAPP_TEMPLATES'),
-          icon: 'i-lucide-file-text',
-          to: accountScopedRoute('settings_whatsapp_templates'),
-        },
-        {
-          name: 'Settings WhatsApp Account Status',
-          label: t('SIDEBAR.WHATSAPP_ACCOUNT_STATUS'),
-          icon: 'i-lucide-activity',
-          to: accountScopedRoute('settings_whatsapp_account_status'),
-        },
-        {
           name: 'Settings Labels',
           label: t('SIDEBAR.LABELS'),
           icon: 'i-lucide-tags',
@@ -630,12 +620,6 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.AUTOMATION'),
           icon: 'i-lucide-repeat',
           to: accountScopedRoute('automation_list'),
-        },
-        {
-          name: 'Settings Agent Bots',
-          label: t('SIDEBAR.AGENT_BOTS'),
-          icon: 'i-lucide-bot',
-          to: accountScopedRoute('agent_bots'),
         },
         {
           name: 'Settings Macros',
@@ -678,12 +662,6 @@ const menuItems = computed(() => {
           label: t('SIDEBAR.CONVERSATION_WORKFLOW'),
           icon: 'i-lucide-workflow',
           to: accountScopedRoute('conversation_workflow_index'),
-        },
-        {
-          name: 'Settings Security',
-          label: t('SIDEBAR.SECURITY'),
-          icon: 'i-lucide-shield',
-          to: accountScopedRoute('security_settings_index'),
         },
         {
           name: 'Settings Billing',
@@ -732,14 +710,7 @@ const menuItems = computed(() => {
           />
         </template>
         <template v-else>
-          <div class="grid flex-shrink-0 place-content-center size-6">
-            <Logo class="size-4" />
-          </div>
-          <div class="flex-shrink-0 w-px h-3 bg-n-strong" />
-          <SidebarAccountSwitcher
-            class="flex-grow -mx-1 min-w-0"
-            @show-create-account-modal="emit('showCreateAccountModal')"
-          />
+          <span class="text-[15px] font-semibold tracking-tight text-n-slate-12 flex-shrink-0 select-none pl-1">wasup.co</span>
         </template>
       </div>
       <div
@@ -841,8 +812,8 @@ const menuItems = computed(() => {
       @dblclick="onResizeHandleDoubleClick"
     >
       <div
-        class="absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-brand transition-colors"
-        :class="{ 'bg-n-brand': isResizing }"
+        class="absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-slate-8 transition-colors"
+        :class="{ 'bg-n-slate-8': isResizing }"
       />
     </div>
   </aside>

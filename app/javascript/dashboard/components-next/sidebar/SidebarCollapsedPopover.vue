@@ -47,12 +47,14 @@ const transition = computed(() =>
   skipTransition.value
     ? {}
     : {
-        enterActiveClass: 'transition-all duration-200 ease-out',
-        enterFromClass: 'opacity-0 -translate-y-2 max-h-0',
-        enterToClass: 'opacity-100 translate-y-0 max-h-96',
-        leaveActiveClass: 'transition-all duration-150 ease-in',
-        leaveFromClass: 'opacity-100 translate-y-0 max-h-96',
-        leaveToClass: 'opacity-0 -translate-y-2 max-h-0',
+        enterActiveClass:
+          'transition-[opacity,transform] duration-200 ease-out overflow-hidden',
+        enterFromClass: 'opacity-0 -translate-y-2',
+        enterToClass: 'opacity-100 translate-y-0',
+        leaveActiveClass:
+          'transition-[opacity,transform] duration-150 ease-in overflow-hidden',
+        leaveFromClass: 'opacity-100 translate-y-0',
+        leaveToClass: 'opacity-0 -translate-y-2',
       }
 );
 

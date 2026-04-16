@@ -1,7 +1,11 @@
 <template>
   <div class="reports--wrapper overflow-auto bg-n-surface-1 w-full px-6">
     <div class="max-w-[60rem] mx-auto pb-12">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" :key="$route.path" />
+        </transition>
+      </router-view>
     </div>
   </div>
 </template>

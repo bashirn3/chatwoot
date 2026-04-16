@@ -112,20 +112,21 @@ const handleAvatarHover = isHovered => {
     <CardLayout
       :key="id"
       layout="row"
+      class="[&>div]:!py-2.5 [&>div]:!px-4"
       :class="{
         'outline-n-weak !bg-n-slate-3 dark:!bg-n-solid-3': isSelected,
       }"
     >
-      <div class="flex items-center justify-start flex-1 gap-4">
+      <div class="flex items-center justify-start flex-1 gap-3 min-w-0">
         <div
-          class="relative"
+          class="relative flex-shrink-0"
           @mouseenter="handleAvatarHover(true)"
           @mouseleave="handleAvatarHover(false)"
         >
           <Avatar
             :name="name"
             :src="thumbnail"
-            :size="48"
+            :size="32"
             :status="availabilityStatus"
             hide-offline-status
             rounded-full
@@ -144,53 +145,52 @@ const handleAvatarHover = isHovered => {
             </template>
           </Avatar>
         </div>
-        <div class="flex flex-col gap-0.5 flex-1">
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span class="text-base font-medium truncate text-n-slate-12">
-              {{ name }}
-            </span>
-            <span class="inline-flex items-center gap-1">
-              <span
-                v-if="additionalAttributes?.companyName"
-                class="i-ph-building-light size-4 text-n-slate-10 mb-0.5"
-              />
-              <span
-                v-if="additionalAttributes?.companyName"
-                class="text-sm truncate text-n-slate-11"
-              >
-                {{ additionalAttributes.companyName }}
-              </span>
-            </span>
-          </div>
-          <div
-            class="flex flex-wrap items-center justify-start gap-x-3 gap-y-1"
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <span class="text-sm font-medium truncate text-n-slate-12">
+            {{ name }}
+          </span>
+          <span
+            v-if="additionalAttributes?.companyName"
+            class="hidden sm:inline-flex items-center gap-1 text-xs truncate text-n-slate-11"
           >
-            <div v-if="email" class="truncate max-w-72" :title="email">
-              <span class="text-sm text-n-slate-11">
-                {{ email }}
-              </span>
-            </div>
-            <div v-if="email" class="w-px h-3 truncate bg-n-slate-6" />
-            <span v-if="phoneNumber" class="text-sm truncate text-n-slate-11">
-              {{ phoneNumber }}
-            </span>
-            <div v-if="phoneNumber" class="w-px h-3 truncate bg-n-slate-6" />
-            <span
-              v-if="countryDetails"
-              class="inline-flex items-center gap-2 text-sm truncate text-n-slate-11"
-            >
-              <Flag :country="countryDetails.countryCode" class="size-3.5" />
-              {{ formattedLocation }}
-            </span>
-            <div v-if="countryDetails" class="w-px h-3 truncate bg-n-slate-6" />
-            <Button
-              :label="t('CONTACTS_LAYOUT.CARD.VIEW_DETAILS')"
-              variant="link"
-              size="xs"
-              @click="onClickViewDetails"
-            />
-          </div>
+            <span class="i-ph-building-light size-3 text-n-slate-10" />
+            {{ additionalAttributes.companyName }}
+          </span>
+          <div class="w-px h-3 bg-n-slate-6 hidden sm:block" />
+          <span v-if="phoneNumber" class="text-xs truncate text-n-slate-11">
+            {{ phoneNumber }}
+          </span>
+          <div
+            v-if="phoneNumber && email"
+            class="w-px h-3 bg-n-slate-6 hidden sm:block"
+          />
+          <span
+            v-if="email"
+            class="hidden lg:inline text-xs truncate text-n-slate-11 max-w-48"
+            :title="email"
+          >
+            {{ email }}
+          </span>
+          <div
+            v-if="countryDetails"
+            class="w-px h-3 bg-n-slate-6 hidden lg:block"
+          />
+          <span
+            v-if="countryDetails"
+            class="hidden lg:inline-flex items-center gap-1.5 text-xs truncate text-n-slate-11"
+          >
+            <Flag :country="countryDetails.countryCode" class="size-3" />
+            {{ formattedLocation }}
+          </span>
         </div>
+        <Button
+          :label="t('CONTACTS_LAYOUT.CARD.VIEW_DETAILS')"
+          variant="link"
+          color="slate"
+          size="xs"
+          class="flex-shrink-0 !text-xs"
+          @click="onClickViewDetails"
+        />
       </div>
 
       <Button
@@ -198,6 +198,7 @@ const handleAvatarHover = isHovered => {
         variant="ghost"
         color="slate"
         size="xs"
+        class="flex-shrink-0"
         :class="{ 'rotate-180': isExpanded }"
         @click="onClickExpand"
       />

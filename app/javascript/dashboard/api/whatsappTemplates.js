@@ -46,7 +46,9 @@ class WhatsappTemplatesAPI extends ApiClient {
 
   // Submit template to multiple WhatsApp channels
   submitToChannels(id, channelIds) {
-    return axios.post(`${this.url}/${id}/submit_to_channels`, { channel_ids: channelIds });
+    return axios.post(`${this.url}/${id}/submit_to_channels`, {
+      channel_ids: channelIds,
+    });
   }
 
   // Sync template status from Meta

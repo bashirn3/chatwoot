@@ -317,6 +317,10 @@ en:
       name: 'Dialogflow'
       short_description: 'Build chatbots to handle initial queries before transferring to agents.'
       description: 'Build chatbots with Dialogflow and easily integrate them into your inbox. These bots can handle initial queries before transferring them to a customer service agent.'
+    router:
+      name: 'Bot Router'
+      short_description: 'Smart routing between AI knowledge base and Typebot workflows.'
+      description: 'Route incoming messages to the right bot automatically. Simple Q&A goes to the RAG knowledge base, complex workflows go to Typebot flows, and low-confidence answers are handed off to human agents.'
     google_translate:
       name: 'Google Translate'
       short_description: 'Automatically translate customer messages for agents.'
@@ -333,6 +337,10 @@ en:
       name: 'Notion'
       short_description: 'Integrate databases, documents and pages directly with Captain.'
       description: 'Connect your Notion workspace to enable Captain to access and generate intelligent responses using content from your databases, documents, and pages to provide more contextual customer support.'
+    google_drive:
+      name: 'Google Drive'
+      short_description: 'Import documents from Google Drive into Captain knowledge base.'
+      description: 'Connect your Google Drive to automatically import PDFs and documents as knowledge sources for Captain. Keep your assistant up to date with the latest content from your shared drives.'
     shopify:
       name: 'Shopify'
       short_description: 'Access order details and customer data from your Shopify store.'

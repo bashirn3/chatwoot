@@ -208,6 +208,119 @@ shopify:
   hook_type: account
   allow_multiple_hooks: false
 
+router:
+  id: router
+  logo: bot-router.png
+  i18n_key: router
+  action: /router
+  hook_type: inbox
+  allow_multiple_hooks: true
+  settings_json_schema:
+    {
+      'type': 'object',
+      'properties':
+        {
+          'router_mode': { 'type': 'string', 'enum': ['auto', 'typebot_only', 'rag_only'] },
+          'typebot_url': { 'type': 'string' },
+          'public_id': { 'type': 'string' },
+          'api_token': { 'type': 'string' },
+          'llm_provider': { 'type': 'string', 'enum': ['openai', 'anthropic'] },
+          'llm_api_key': { 'type': 'string' },
+          'llm_model': { 'type': 'string' },
+          'system_prompt': { 'type': 'string' },
+          'trigger_keywords': { 'type': 'string' },
+          'confidence_threshold': { 'type': 'number' },
+        },
+      'required': ['typebot_url', 'public_id'],
+      'additionalProperties': false,
+    }
+  settings_form_schema:
+    [
+      {
+        'label': 'Routing Mode',
+        'type': 'select',
+        'name': 'router_mode',
+        'default': 'auto',
+        'options': [
+          { 'label': 'Auto — RAG for Q&A, Typebot for workflows', 'value': 'auto' },
+          { 'label': 'Typebot Only — all messages to Typebot', 'value': 'typebot_only' },
+          { 'label': 'RAG Only — all messages to knowledge base', 'value': 'rag_only' },
+        ],
+        'help': 'How incoming messages are routed between the AI knowledge base and Typebot flows',
+      },
+      {
+        'label': 'Typebot Server URL',
+        'type': 'text',
+        'name': 'typebot_url',
+        'validation': 'required',
+        'validationName': 'Server URL',
+        'help': 'The URL of your self-hosted Typebot instance (e.g., https://typebot.example.com)',
+      },
+      {
+        'label': 'Typebot Public ID',
+        'type': 'text',
+        'name': 'public_id',
+        'validation': 'required',
+        'validationName': 'Public ID',
+        'help': 'The public ID of the Typebot you want to connect',
+      },
+      {
+        'label': 'Typebot API Token',
+        'type': 'text',
+        'name': 'api_token',
+        'help': 'API token for authenticated requests to your Typebot instance',
+      },
+      {
+        'label': 'Trigger Keywords (comma-separated)',
+        'type': 'text',
+        'name': 'trigger_keywords',
+        'help': 'Messages starting with these words go to Typebot instead of RAG (e.g., "menu, help, start")',
+      },
+      {
+        'label': 'LLM Provider',
+        'type': 'select',
+        'name': 'llm_provider',
+        'default': 'openai',
+        'options': [
+          { 'label': 'OpenAI', 'value': 'openai' },
+          { 'label': 'Anthropic', 'value': 'anthropic' },
+        ],
+        'help': 'Provider for the RAG knowledge base AI',
+      },
+      {
+        'label': 'LLM API Key',
+        'type': 'text',
+        'name': 'llm_api_key',
+        'help': 'API key for your LLM provider (required for RAG mode)',
+      },
+      {
+        'label': 'LLM Model',
+        'type': 'text',
+        'name': 'llm_model',
+        'help': 'Model name (e.g., gpt-4.1-mini, claude-sonnet-4-20250514). Defaults to gpt-4.1-mini',
+      },
+      {
+        'label': 'System Prompt',
+        'type': 'textarea',
+        'name': 'system_prompt',
+        'help': 'Custom instructions for the RAG AI assistant. Leave blank for default.',
+      },
+      {
+        'label': 'Confidence Threshold',
+        'type': 'number',
+        'name': 'confidence_threshold',
+        'help': 'Minimum confidence (0.0-1.0) for the RAG bot to respond. Below this, conversation is handed off to a human. Default: 0.6',
+      },
+    ]
+  visible_properties: ['router_mode', 'typebot_url', 'public_id', 'llm_provider']
+
+google_drive:
+  id: google_drive
+  logo: google-drive.png
+  i18n_key: google_drive
+  hook_type: account
+  allow_multiple_hooks: false
+
 leadsquared:
   id: leadsquared
   feature_flag: crm_integration

@@ -23,8 +23,10 @@ provideDropdownContext({
 <template>
   <div v-on-click-outside="closeMenu" class="relative space-y-2">
     <slot name="trigger" :is-open :toggle="() => toggle()" />
-    <div v-if="isOpen" class="absolute">
-      <slot />
-    </div>
+    <Transition name="dropdown-pop">
+      <div v-if="isOpen" class="absolute">
+        <slot />
+      </div>
+    </Transition>
   </div>
 </template>

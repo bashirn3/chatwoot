@@ -76,10 +76,16 @@ class Captain::Document < ApplicationRecord
     update!(metadata: (metadata || {}).merge('openai_file_id' => file_id))
   end
 
-  def display_url
-    return external_link if external_link.present? && !external_link.start_with?('PDF:')
+  def google_drive_document?
+    external_link&.start_with?('gdrive://')
+  end
 
-    if pdf_file.attached?
+  def display_url
+    return external_link if external_link.present? && !external_link.start_with?('PDF:') && !google_drive_document?
+
+    if google_drive_document?
+      "https://drive.google.com/file/d/#{external_link.delete_prefix('gdrive://')}/view"
+    elsif pdf_file.attached?
       Rails.application.routes.url_helpers.rails_blob_url(pdf_file, only_path: false)
     else
       external_link
@@ -90,6 +96,7 @@ class Captain::Document < ApplicationRecord
 
   def enqueue_crawl_job
     return if status != 'in_progress'
+    return if google_drive_document? && content.present?
 
     Captain::Documents::CrawlJob.perform_later(self)
   end
@@ -148,6 +155,7 @@ class Captain::Document < ApplicationRecord
   def normalize_external_link
     return if external_link.blank?
     return if pdf_document?
+    return if google_drive_document?
 
     self.external_link = external_link.delete_suffix('/')
   end

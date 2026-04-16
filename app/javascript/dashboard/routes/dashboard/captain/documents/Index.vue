@@ -2,8 +2,11 @@
 import { computed, onMounted, ref, nextTick } from 'vue';
 import { useMapGetter, useStore } from 'dashboard/composables/store';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useAlert } from 'dashboard/composables';
 import { FEATURE_FLAGS } from 'dashboard/featureFlags';
 import { useAccount } from 'dashboard/composables/useAccount';
+import CaptainGoogleDrive from 'dashboard/api/captain/googleDrive';
 
 import DeleteDialog from 'dashboard/components-next/captain/pageComponents/DeleteDialog.vue';
 import DocumentCard from 'dashboard/components-next/captain/assistant/DocumentCard.vue';
@@ -14,9 +17,11 @@ import CreateDocumentDialog from 'dashboard/components-next/captain/pageComponen
 import DocumentPageEmptyState from 'dashboard/components-next/captain/pageComponents/emptyStates/DocumentPageEmptyState.vue';
 import FeatureSpotlightPopover from 'dashboard/components-next/feature-spotlight/FeatureSpotlightPopover.vue';
 import LimitBanner from 'dashboard/components-next/captain/pageComponents/document/LimitBanner.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
 
 const route = useRoute();
 const store = useStore();
+const { t } = useI18n();
 
 const { isOnChatwootCloud } = useAccount();
 const uiFlags = useMapGetter('captainDocuments/getUIFlags');
@@ -37,6 +42,79 @@ const showRelatedResponses = ref(false);
 const showCreateDialog = ref(false);
 const createDocumentDialog = ref(null);
 const relationQuestionDialog = ref(null);
+
+const driveConnected = ref(false);
+const driveLastSynced = ref(null);
+const driveLoading = ref(false);
+const driveSyncing = ref(false);
+
+const fetchDriveStatus = async () => {
+  try {
+    const { data } = await CaptainGoogleDrive.status();
+    driveConnected.value = data.connected;
+    driveLastSynced.value = data.last_synced_at;
+  } catch {
+    driveConnected.value = false;
+  }
+};
+
+const handleConnectDrive = async () => {
+  driveLoading.value = true;
+  try {
+    const { data } = await CaptainGoogleDrive.authorize(
+      selectedAssistantId.value
+    );
+    if (data.url) {
+      window.location.href = data.url;
+    }
+  } catch {
+    useAlert(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECT_ERROR'));
+    driveLoading.value = false;
+  }
+};
+
+const handleSyncDrive = async () => {
+  driveSyncing.value = true;
+  try {
+    await CaptainGoogleDrive.sync();
+    useAlert(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.SYNC_STARTED'));
+  } catch {
+    useAlert(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECT_ERROR'));
+  } finally {
+    driveSyncing.value = false;
+  }
+};
+
+const handleDisconnectDrive = async () => {
+  if (!window.confirm(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.DISCONNECT_CONFIRM')))
+    return;
+  try {
+    await CaptainGoogleDrive.disconnect();
+    driveConnected.value = false;
+    driveLastSynced.value = null;
+    useAlert(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.DISCONNECT_SUCCESS'));
+  } catch {
+    useAlert(t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.DISCONNECT_ERROR'));
+  }
+};
+
+const handleDriveCallback = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('google_drive') === 'connected') {
+    driveConnected.value = true;
+    fetchDriveStatus();
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+};
+
+const formattedLastSynced = computed(() => {
+  if (!driveLastSynced.value)
+    return t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.NEVER_SYNCED');
+  const date = new Date(driveLastSynced.value);
+  return t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.LAST_SYNCED', {
+    time: date.toLocaleString(),
+  });
+});
 
 const handleShowRelatedDocument = () => {
   showRelatedResponses.value = true;
@@ -88,6 +166,8 @@ const onDeleteSuccess = () => {
 
 onMounted(() => {
   fetchDocuments();
+  fetchDriveStatus();
+  handleDriveCallback();
 });
 </script>
 
@@ -128,6 +208,72 @@ onMounted(() => {
 
     <template #body>
       <LimitBanner class="mb-5" />
+
+      <div
+        class="flex items-center justify-between p-4 mb-5 border rounded-xl border-n-weak bg-n-surface-2"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center justify-center rounded-lg size-10 bg-n-alpha-2"
+          >
+            <span class="i-lucide-hard-drive text-n-slate-11 size-5" />
+          </div>
+          <div>
+            <h4
+              v-if="driveConnected"
+              class="text-sm font-medium text-n-slate-12"
+            >
+              {{ $t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECTED') }}
+            </h4>
+            <h4 v-else class="text-sm font-medium text-n-slate-12">
+              {{ $t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECT') }}
+            </h4>
+            <p class="text-xs text-n-slate-11">
+              <template v-if="driveConnected">
+                {{ formattedLastSynced }}
+              </template>
+              <template v-else>
+                {{ $t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECT_DESCRIPTION') }}
+              </template>
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <template v-if="driveConnected">
+            <Button
+              :label="
+                driveSyncing
+                  ? $t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.SYNCING')
+                  : $t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.SYNC_NOW')
+              "
+              icon="i-lucide-refresh-cw"
+              variant="faded"
+              color="slate"
+              size="sm"
+              :is-loading="driveSyncing"
+              @click="handleSyncDrive"
+            />
+            <Button
+              :label="$t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.DISCONNECT')"
+              variant="ghost"
+              color="ruby"
+              size="sm"
+              @click="handleDisconnectDrive"
+            />
+          </template>
+          <template v-else>
+            <Button
+              :label="$t('CAPTAIN.DOCUMENTS.GOOGLE_DRIVE.CONNECT')"
+              icon="i-lucide-link"
+              variant="faded"
+              color="slate"
+              size="sm"
+              :is-loading="driveLoading"
+              @click="handleConnectDrive"
+            />
+          </template>
+        </div>
+      </div>
 
       <div class="flex flex-col gap-4">
         <DocumentCard

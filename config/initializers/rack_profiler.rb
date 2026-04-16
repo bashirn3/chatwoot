@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-if Rails.env.development? && ENV['DISABLE_MINI_PROFILER'].blank?
+# Disabled: mini-profiler causes 500s on the includes.js resource.
+# Re-enable by setting ENABLE_MINI_PROFILER=true in .env
+if Rails.env.development? && ENV['ENABLE_MINI_PROFILER'] == 'true'
   require 'rack-mini-profiler'
 
   # initialization is skipped so trigger it

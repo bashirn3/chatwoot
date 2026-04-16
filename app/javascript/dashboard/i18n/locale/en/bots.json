@@ -1,0 +1,57 @@
+{
+  "BOTS": {
+    "TITLE": "Workflows",
+    "DESCRIPTION": "Create and manage automated conversation flows. Design visual workflows or set up webhook-based bots, then assign them to your inboxes.",
+    "SELECTOR": {
+      "TITLE": "Choose how to add a workflow",
+      "VISUAL_BOT": "Visual Flow Builder",
+      "VISUAL_BOT_DESC": "Design conversation flows visually with a drag-and-drop editor. No coding required.",
+      "WEBHOOK_BOT": "Webhook Bot",
+      "WEBHOOK_BOT_DESC": "Connect an external bot service via webhook URL for full control over the conversation logic."
+    },
+    "CREATE": "Create Workflow",
+    "CREATE_PLACEHOLDER": "My Support Workflow",
+    "CREATE_SUCCESS": "Workflow created. Opening editor...",
+    "CREATE_ERROR": "Failed to create workflow.",
+    "EDIT": "Edit",
+    "PUBLISH": "Publish",
+    "PUBLISH_SUCCESS": "Workflow published successfully.",
+    "PUBLISH_ERROR": "Failed to publish workflow.",
+    "DELETE": "Delete",
+    "DELETE_CONFIRM": "Are you sure you want to delete this workflow? This cannot be undone.",
+    "DELETE_SUCCESS": "Workflow deleted.",
+    "DELETE_ERROR": "Failed to delete workflow.",
+    "ASSIGN": "Assign",
+    "ASSIGN_SUCCESS": "Workflow assigned to inbox. It will now handle incoming messages.",
+    "ASSIGN_ERROR": "Failed to assign workflow. Make sure the workflow is published first.",
+    "UNASSIGN": "Remove from Inbox",
+    "UNASSIGN_SUCCESS": "Workflow removed from inbox.",
+    "UNASSIGN_ERROR": "Failed to remove workflow from inbox.",
+    "EMPTY": "No workflows yet. Create one to get started with automated conversations.",
+    "NOT_CONFIGURED": "Workflow builder is not configured.",
+    "NOT_CONFIGURED_HELP": "Set TYPEBOT_BUILDER_URL and TYPEBOT_API_TOKEN to enable the workflow builder. The API token must be created inside Typebot (Settings → My account → API tokens), not an arbitrary string.",
+    "POPUP_BLOCKED": "Your browser blocked the new tab. Allow pop-ups for this site and try again.",
+    "BUILDER_URL_MISSING": "TYPEBOT_BUILDER_URL is not set on the server. Add it to the deployment environment and redeploy.",
+    "STATUS": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published"
+    },
+    "CARD": {
+      "PUBLISHED_DESC": "Live and ready to handle conversations",
+      "DRAFT_DESC": "Edit and publish to start using this workflow"
+    },
+    "ASSIGNED_TO": "Assigned to",
+    "NO_INBOXES": "Not assigned to any inbox",
+    "SELECT_INBOX": "Select an inbox",
+    "LOADING": "Loading workflows...",
+    "WEBHOOK": {
+      "TITLE": "Webhook Workflows",
+      "NAME_LABEL": "Workflow Name",
+      "NAME_PLACEHOLDER": "My Webhook Workflow",
+      "URL_LABEL": "Webhook URL",
+      "URL_PLACEHOLDER": "https://your-server.com/bot-webhook",
+      "CREATE": "Create Webhook Workflow",
+      "BACK": "Back"
+    }
+  }
+}

@@ -45,6 +45,7 @@ class DashboardController < ActionController::Base
 
   def set_global_config
     @global_config = GlobalConfig.get(*GLOBAL_CONFIG_KEYS).merge(app_config)
+    apply_white_label_overrides
   end
 
   def set_dashboard_scripts
@@ -79,8 +80,38 @@ class DashboardController < ActionController::Base
       WHATSAPP_CONFIGURATION_ID: GlobalConfigService.load('WHATSAPP_CONFIGURATION_ID', ''),
       IS_ENTERPRISE: ChatwootApp.enterprise?,
       AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
+      WHATSAPP_BRIDGE_URL: ENV.fetch('WHATSAPP_BRIDGE_URL', ''),
+      TYPEBOT_BUILDER_URL: ENV.fetch('TYPEBOT_BUILDER_URL', ''),
       GIT_SHA: GIT_HASH,
-      ALLOWED_LOGIN_METHODS: allowed_login_methods
+      ALLOWED_LOGIN_METHODS: allowed_login_methods,
+      WHITE_LABEL: white_label_config
+    }
+  end
+
+  def white_label_config
+    return {} unless defined?(WhiteLabelConfig)
+
+    WhiteLabelConfig.to_frontend_config
+  end
+
+  def apply_white_label_overrides
+    return unless defined?(WhiteLabelConfig)
+
+    wl = WhiteLabelConfig.config
+    return if wl.blank?
+
+    white_label_mappings(wl).each do |key, value|
+      @global_config[key] = value if value.present?
+    end
+  end
+
+  def white_label_mappings(config)
+    {
+      'INSTALLATION_NAME' => config['brand_name'],
+      'LOGO' => config['logo_url'],
+      'LOGO_DARK' => config['logo_url'],
+      'LOGO_THUMBNAIL' => config['logo_url'],
+      'BRAND_NAME' => config['brand_name']
     }
   end
 

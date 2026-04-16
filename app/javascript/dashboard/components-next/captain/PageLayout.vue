@@ -1,15 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { OnClickOutside } from '@vueuse/components';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useMapGetter } from 'dashboard/composables/store.js';
+import { useMapGetter, useStore } from 'dashboard/composables/store.js';
 import { usePolicy } from 'dashboard/composables/usePolicy';
+import { useAlert } from 'dashboard/composables';
 import Button from 'dashboard/components-next/button/Button.vue';
 import BackButton from 'dashboard/components/widgets/BackButton.vue';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import Policy from 'dashboard/components/policy.vue';
+import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import AssistantSwitcher from 'dashboard/components-next/captain/pageComponents/switcher/AssistantSwitcher.vue';
 import CreateAssistantDialog from 'dashboard/components-next/captain/pageComponents/assistant/CreateAssistantDialog.vue';
 
@@ -73,6 +75,8 @@ const emit = defineEmits(['click', 'close', 'update:currentPage']);
 const { t } = useI18n();
 
 const route = useRoute();
+const router = useRouter();
+const store = useStore();
 const { shouldShowPaywall } = usePolicy();
 
 const showAssistantSwitcherDropdown = ref(false);
@@ -111,6 +115,93 @@ const toggleAssistantSwitcher = () => {
 const handleCreateAssistant = () => {
   showAssistantSwitcherDropdown.value = false;
   createAssistantDialogRef.value.dialogRef.open();
+};
+
+const assistantToDelete = ref(null);
+const deleteAssistantDialog = ref(null);
+const isDeleting = ref(false);
+
+const fetchDataForRoute = async (routeName, assistantId) => {
+  const dataFetchMap = {
+    captain_assistants_responses_index: async () => {
+      await store.dispatch('captainResponses/get', { assistantId });
+      await store.dispatch('captainResponses/fetchPendingCount', assistantId);
+    },
+    captain_assistants_responses_pending: async () => {
+      await store.dispatch('captainResponses/get', {
+        assistantId,
+        status: 'pending',
+      });
+    },
+    captain_assistants_documents_index: async () => {
+      await store.dispatch('captainDocuments/get', { assistantId });
+    },
+    captain_assistants_scenarios_index: async () => {
+      await store.dispatch('captainScenarios/get', { assistantId });
+    },
+    captain_assistants_playground_index: () => {},
+    captain_assistants_inboxes_index: async () => {
+      await store.dispatch('captainInboxes/get', { assistantId });
+    },
+    captain_tools_index: async () => {
+      await store.dispatch('captainCustomTools/get', { page: 1 });
+    },
+    captain_assistants_settings_index: async () => {
+      await store.dispatch('captainAssistants/show', assistantId);
+    },
+  };
+  const fetchFn = dataFetchMap[routeName];
+  if (fetchFn) await fetchFn();
+};
+
+const handleAssistantSwitch = async assistant => {
+  showAssistantSwitcherDropdown.value = false;
+  const currentRouteName = route.name;
+  const targetRouteName =
+    currentRouteName || 'captain_assistants_responses_index';
+  await fetchDataForRoute(targetRouteName, assistant.id);
+  await router.push({
+    name: targetRouteName,
+    params: {
+      accountId: route.params.accountId,
+      assistantId: assistant.id,
+    },
+  });
+};
+
+const handleDeleteAssistant = assistant => {
+  assistantToDelete.value = assistant;
+  showAssistantSwitcherDropdown.value = false;
+  nextTick(() => deleteAssistantDialog.value?.open());
+};
+
+const handleDeleteConfirm = async () => {
+  if (!assistantToDelete.value || isDeleting.value) return;
+  isDeleting.value = true;
+  try {
+    await store.dispatch(
+      'captainAssistants/delete',
+      assistantToDelete.value.id
+    );
+    useAlert(t('CAPTAIN.ASSISTANTS.DELETE.SUCCESS_MESSAGE'));
+    const remaining = assistants.value.filter(
+      a => a.id !== assistantToDelete.value?.id
+    );
+    deleteAssistantDialog.value?.close();
+    assistantToDelete.value = null;
+    if (remaining.length > 0) {
+      handleAssistantSwitch(remaining[0]);
+    } else {
+      router.push({
+        name: 'captain_assistants_index',
+        params: { accountId: route.params.accountId },
+      });
+    }
+  } catch {
+    useAlert(t('CAPTAIN.ASSISTANTS.DELETE.ERROR_MESSAGE'));
+  } finally {
+    isDeleting.value = false;
+  }
 };
 </script>
 
@@ -153,7 +244,9 @@ const handleCreateAssistant = () => {
                       v-if="showAssistantSwitcherDropdown"
                       class="absolute ltr:left-0 rtl:right-0 top-9"
                       @close="showAssistantSwitcherDropdown = false"
+                      @select-assistant="handleAssistantSwitch"
                       @create-assistant="handleCreateAssistant"
+                      @delete-assistant="handleDeleteAssistant"
                     />
                   </OnClickOutside>
                 </div>
@@ -231,5 +324,14 @@ const handleCreateAssistant = () => {
       />
     </footer>
     <CreateAssistantDialog ref="createAssistantDialogRef" type="create" />
+    <Dialog
+      ref="deleteAssistantDialog"
+      type="alert"
+      :title="t('CAPTAIN.ASSISTANTS.DELETE.TITLE')"
+      :description="t('CAPTAIN.ASSISTANTS.DELETE.DESCRIPTION')"
+      :confirm-button-label="t('CAPTAIN.ASSISTANTS.DELETE.CONFIRM')"
+      :is-loading="isDeleting"
+      @confirm="handleDeleteConfirm"
+    />
   </section>
 </template>

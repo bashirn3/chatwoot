@@ -1,0 +1,7 @@
+brand_name: "wasup.co"
+logo_url: "/dashboard/images/wasup-logo.png"
+favicon_url: "/dashboard/images/wasup-logo.png"
+primary_color: "#64748B"
+hide_chatwoot_branding: true
+hide_typebot_branding: true
+support_email: "support@wasup.co"

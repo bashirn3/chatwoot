@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onUnmounted } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useToggle } from '@vueuse/core';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
@@ -9,6 +9,7 @@ import EmailTranscriptModal from './EmailTranscriptModal.vue';
 import ResolveAction from '../../buttons/ResolveAction.vue';
 import ButtonV4 from 'dashboard/components-next/button/Button.vue';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
+import TypebotsAPI from 'dashboard/api/typebots';
 
 import {
   CMD_MUTE_CONVERSATION,
@@ -16,17 +17,37 @@ import {
   CMD_UNMUTE_CONVERSATION,
 } from 'dashboard/helper/commandbar/events';
 
-// No props needed as we're getting currentChat from the store directly
 const store = useStore();
 const { t } = useI18n();
 
 const [showEmailActionsModal, toggleEmailModal] = useToggle(false);
 const [showActionsDropdown, toggleDropdown] = useToggle(false);
+const togglingBot = ref(false);
 
 const currentChat = computed(() => store.getters.getSelectedChat);
 
+const isBotPaused = computed(
+  () => currentChat.value.additional_attributes?.bot_paused === true
+);
+
 const actionMenuItems = computed(() => {
   const items = [];
+
+  if (isBotPaused.value) {
+    items.push({
+      icon: 'i-lucide-bot',
+      label: t('CONTACT_PANEL.ENABLE_BOT'),
+      action: 'enable_bot',
+      value: 'enable_bot',
+    });
+  } else {
+    items.push({
+      icon: 'i-lucide-bot-off',
+      label: t('CONTACT_PANEL.DISABLE_BOT'),
+      action: 'disable_bot',
+      value: 'disable_bot',
+    });
+  }
 
   if (!currentChat.value.muted) {
     items.push({
@@ -54,6 +75,24 @@ const actionMenuItems = computed(() => {
   return items;
 });
 
+const handleToggleBot = async () => {
+  if (togglingBot.value) return;
+  togglingBot.value = true;
+  try {
+    const { data } = await TypebotsAPI.toggleBot(currentChat.value.id);
+    await store.dispatch('getConversation', currentChat.value.id);
+    useAlert(
+      data.bot_paused
+        ? t('CONTACT_PANEL.BOT_DISABLED_SUCCESS')
+        : t('CONTACT_PANEL.BOT_ENABLED_SUCCESS')
+    );
+  } catch {
+    useAlert(t('CONTACT_PANEL.BOT_TOGGLE_FAILED'));
+  } finally {
+    togglingBot.value = false;
+  }
+};
+
 const handleActionClick = ({ action }) => {
   toggleDropdown(false);
 
@@ -65,6 +104,8 @@ const handleActionClick = ({ action }) => {
     useAlert(t('CONTACT_PANEL.UNMUTED_SUCCESS'));
   } else if (action === 'send_transcript') {
     toggleEmailModal();
+  } else if (action === 'enable_bot' || action === 'disable_bot') {
+    handleToggleBot();
   }
 };
 

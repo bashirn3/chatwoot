@@ -18,7 +18,10 @@ const isLoading = ref(true);
 const fetchTemplate = async () => {
   try {
     const templateId = route.params.templateId;
-    template.value = await store.dispatch('whatsappTemplates/fetchTemplate', templateId);
+    template.value = await store.dispatch(
+      'whatsappTemplates/fetchTemplate',
+      templateId
+    );
   } catch (error) {
     useAlert(t('WHATSAPP_TEMPLATES.FETCH_ERROR'));
     router.push({ name: 'settings_whatsapp_templates' });
@@ -27,7 +30,7 @@ const fetchTemplate = async () => {
   }
 };
 
-const handleSubmit = async (templateData) => {
+const handleSubmit = async templateData => {
   try {
     await store.dispatch('whatsappTemplates/updateTemplate', {
       id: template.value.id,
@@ -36,7 +39,8 @@ const handleSubmit = async (templateData) => {
     useAlert(t('WHATSAPP_TEMPLATES.UPDATE_SUCCESS'));
     router.push({ name: 'settings_whatsapp_templates' });
   } catch (error) {
-    const errorMessage = error.response?.data?.errors?.join(', ') || error.message;
+    const errorMessage =
+      error.response?.data?.errors?.join(', ') || error.message;
     useAlert(errorMessage || t('WHATSAPP_TEMPLATES.UPDATE_ERROR'));
   }
 };
@@ -54,7 +58,7 @@ onMounted(fetchTemplate);
       v-if="isLoading"
       :message="$t('WHATSAPP_TEMPLATES.LOADING')"
     />
-    
+
     <TemplateBuilder
       v-else-if="template"
       :template="template"
@@ -62,8 +66,11 @@ onMounted(fetchTemplate);
       @submit="handleSubmit"
       @cancel="handleCancel"
     />
-    
-    <div v-else class="flex flex-col items-center justify-center py-16 text-center text-slate-600">
+
+    <div
+      v-else
+      class="flex flex-col items-center justify-center py-16 text-center text-n-slate-11"
+    >
       <p class="mb-4">{{ $t('WHATSAPP_TEMPLATES.NOT_FOUND') }}</p>
       <Button
         :label="$t('WHATSAPP_TEMPLATES.BACK_TO_LIST')"

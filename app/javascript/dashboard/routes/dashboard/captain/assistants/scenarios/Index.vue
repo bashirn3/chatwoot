@@ -112,7 +112,8 @@ const updateScenario = async scenario => {
     useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.UPDATE.SUCCESS'));
   } catch (error) {
     const errorMessage =
-      error?.response?.message ||
+      error?.response?.data?.message ||
+      error?.message ||
       t('CAPTAIN.ASSISTANTS.SCENARIOS.API.UPDATE.ERROR');
     useAlert(errorMessage);
   }
@@ -127,25 +128,33 @@ const deleteScenario = async id => {
     useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
   } catch (error) {
     const errorMessage =
-      error?.response?.message ||
+      error?.response?.data?.message ||
+      error?.message ||
       t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.ERROR');
     useAlert(errorMessage);
   }
 };
 
-// TODO: Add bulk delete endpoint
 const bulkDeleteScenarios = async ids => {
   const idsArray = ids || Array.from(bulkSelectedIds.value);
-  await Promise.all(
-    idsArray.map(id =>
-      store.dispatch('captainScenarios/delete', {
-        id,
-        assistantId: assistantId.value,
-      })
-    )
-  );
-  bulkSelectedIds.value = new Set();
-  useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
+  try {
+    await Promise.all(
+      idsArray.map(id =>
+        store.dispatch('captainScenarios/delete', {
+          id,
+          assistantId: assistantId.value,
+        })
+      )
+    );
+    bulkSelectedIds.value = new Set();
+    useAlert(t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.SUCCESS'));
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      t('CAPTAIN.ASSISTANTS.SCENARIOS.API.DELETE.ERROR');
+    useAlert(errorMessage);
+  }
 };
 
 const addScenario = async scenario => {

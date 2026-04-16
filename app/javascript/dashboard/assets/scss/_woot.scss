@@ -35,6 +35,40 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
+  scroll-behavior: smooth;
+}
+
+// ---------------------------------------------------------------------------
+//  Custom scrollbar — thin, translucent, matches the dark/light theme
+// ---------------------------------------------------------------------------
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--slate-8), 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--slate-8), 0.3);
+  border-radius: 999px;
+  &:hover {
+    background: rgba(var(--slate-8), 0.5);
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  Text selection — branded highlight instead of default blue
+// ---------------------------------------------------------------------------
+::selection {
+  background: rgba(var(--blue-9), 0.25);
+  color: rgb(var(--slate-12));
+}
+.dark ::selection {
+  background: rgba(var(--blue-9), 0.35);
 }
 
 .tooltip {
@@ -66,4 +100,146 @@ body {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+}
+
+// ---------------------------------------------------------------------------
+//  Global Vue transition classes
+//  All motion uses compositor-friendly transform + opacity only.
+// ---------------------------------------------------------------------------
+
+// -- fade (route-level, App.vue) --
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// -- modal-fade (Modal.vue, ReplyBottomPanel drag overlay) --
+.modal-fade-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+.modal-fade-leave-active {
+  transition: opacity 0.15s ease-in;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-active .modal-container {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+.modal-fade-leave-active .modal-container {
+  transition: transform 0.15s ease-in, opacity 0.15s ease-in;
+}
+.modal-fade-enter-from .modal-container {
+  opacity: 0;
+  transform: scale(0.95) translateY(8px);
+}
+.modal-fade-leave-to .modal-container {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+// -- toast-fade (SnackbarContainer.vue) --
+.toast-fade-enter-active {
+  transition: transform 0.25s cubic-bezier(0.21, 1.02, 0.73, 1), opacity 0.2s ease-out;
+}
+.toast-fade-leave-active {
+  transition: transform 0.2s ease-in, opacity 0.15s ease-in;
+}
+.toast-fade-move {
+  transition: transform 0.25s ease;
+}
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-100%) scale(0.95);
+}
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-40%) scale(0.95);
+}
+
+// -- slide-up (MessagesView spinner) --
+.slide-up-enter-active {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+.slide-up-leave-active {
+  transition: transform 0.15s ease-in, opacity 0.15s ease-in;
+}
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+// -- menu-slide (MacroItem preview) --
+.menu-slide-enter-active {
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+}
+.menu-slide-leave-active {
+  transition: transform 0.1s ease-in, opacity 0.1s ease-in;
+}
+.menu-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.menu-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+// -- network-notification-fade --
+.network-notification-fade-enter-active {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.network-notification-fade-leave-active {
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+}
+.network-notification-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+.network-notification-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+// -- page-fade (inner router-view page transitions) --
+// compositor-only (opacity + transform) — no layout/paint cost
+.page-fade-enter-active {
+  transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-fade-leave-active {
+  transition: opacity 0.14s ease-in, transform 0.14s ease-in;
+}
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+// -- dropdown-pop (DropdownContainer, ComboBox, popovers) --
+.dropdown-pop-enter-active {
+  transition: transform 0.15s cubic-bezier(0.21, 1.02, 0.73, 1), opacity 0.15s ease-out;
+}
+.dropdown-pop-leave-active {
+  transition: transform 0.1s ease-in, opacity 0.1s ease-in;
+}
+.dropdown-pop-enter-from {
+  opacity: 0;
+  transform: scale(0.95) translateY(-4px);
+}
+.dropdown-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.97) translateY(-2px);
 }

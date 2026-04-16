@@ -34,8 +34,7 @@ const getters = {
     $state.records.filter(t => t.status === status),
   getApprovedTemplates: $state =>
     $state.records.filter(t => t.status === 'APPROVED'),
-  getDraftTemplates: $state =>
-    $state.records.filter(t => t.status === 'DRAFT'),
+  getDraftTemplates: $state => $state.records.filter(t => t.status === 'DRAFT'),
   getPendingTemplates: $state =>
     $state.records.filter(t => t.status === 'PENDING'),
 };
@@ -204,7 +203,10 @@ const actions = {
   async duplicateTemplate({ commit }, { templateId, newName }) {
     commit('SET_UI_FLAG', { flag: 'isCreating', value: true });
     try {
-      const response = await WhatsappTemplatesAPI.duplicate(templateId, newName);
+      const response = await WhatsappTemplatesAPI.duplicate(
+        templateId,
+        newName
+      );
       commit('ADD_TEMPLATE', response.data);
       return response.data;
     } catch (error) {
@@ -264,7 +266,10 @@ const actions = {
   async submitToChannels({ commit }, { templateId, channelIds }) {
     commit('SET_UI_FLAG', { flag: 'isSubmitting', value: true });
     try {
-      const response = await WhatsappTemplatesAPI.submitToChannels(templateId, channelIds);
+      const response = await WhatsappTemplatesAPI.submitToChannels(
+        templateId,
+        channelIds
+      );
       return response.data;
     } catch (error) {
       throw error;

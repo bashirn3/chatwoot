@@ -148,19 +148,19 @@
   }
 
   .dark {
-    // slate
-    --slate-1: 17 17 19;
-    --slate-2: 24 25 27;
-    --slate-3: 33 34 37;
-    --slate-4: 39 42 45;
-    --slate-5: 46 49 53;
-    --slate-6: 54 58 63;
-    --slate-7: 67 72 78;
-    --slate-8: 90 97 105;
-    --slate-9: 105 110 119;
-    --slate-10: 119 123 132;
-    --slate-11: 176 180 186;
-    --slate-12: 237 238 240;
+    // slate — neutralised to pure grays (no blue tint)
+    --slate-1: 17 17 17;
+    --slate-2: 24 24 24;
+    --slate-3: 33 33 33;
+    --slate-4: 40 40 40;
+    --slate-5: 47 47 47;
+    --slate-6: 55 55 55;
+    --slate-7: 68 68 68;
+    --slate-8: 92 92 92;
+    --slate-9: 108 108 108;
+    --slate-10: 122 122 122;
+    --slate-11: 178 178 178;
+    --slate-12: 238 238 238;
 
     --iris-1: 19 19 30;
     --iris-2: 23 22 37;
@@ -253,39 +253,39 @@
     --violet-11: 169 153 236;
     --violet-12: 226 221 254;
 
-    --background-color: 28 29 32;
-    --surface-1: 20 21 23;
-    --surface-2: 22 23 26;
-    --surface-active: 53 57 66;
+    --background-color: 13 13 13;
+    --surface-1: 17 17 17;
+    --surface-2: 20 20 20;
+    --surface-active: 45 45 45;
     --background-input-box: 255, 255, 255, 0.02;
     --text-blue: 213 234 255;
     --text-purple: 232 233 254;
     --text-amber: 255 247 234;
-    --border-strong: 46 45 50;
-    --border-weak: 31 31 37;
+    --border-strong: 40 40 40;
+    --border-weak: 28 28 28;
     --border-blue-strong: 201 226 255;
-    --solid-1: 23 23 26;
-    --solid-2: 29 30 36;
-    --solid-3: 44 45 54;
-    --solid-active: 53 57 66;
+    --solid-1: 23 23 23;
+    --solid-2: 28 28 28;
+    --solid-3: 38 38 38;
+    --solid-active: 45 45 45;
     --solid-amber: 56 50 41;
     --solid-blue: 15 57 102;
-    --solid-blue-2: 26 29 35;
+    --solid-blue-2: 24 24 24;
     --solid-iris: 38 42 101;
     --solid-purple: 51 51 107;
     --solid-red: 90 33 34;
     --solid-amber-button: 255 221 141;
-    --card-color: 28 30 34;
+    --card-color: 23 23 23;
     --overlay: 0, 0, 0, 0.4;
     --overlay-avatar: 0, 0, 0, 0.05;
-    --button-color: 42 43 51;
+    --button-color: 35 35 35;
     --button-hover-color: 0, 0, 0, 0.15;
-    --label-background: 36 38 45;
+    --label-background: 30 30 30;
     --label-border: 255, 255, 255, 0.03;
 
-    --alpha-1: 35, 36, 42, 0.8;
-    --alpha-2: 147, 153, 176, 0.12;
-    --alpha-3: 33, 34, 38, 0.95;
+    --alpha-1: 23, 23, 23, 0.8;
+    --alpha-2: 160, 160, 160, 0.12;
+    --alpha-3: 20, 20, 20, 0.95;
     --black-alpha-1: 0, 0, 0, 0.3;
     --black-alpha-2: 0, 0, 0, 0.2;
     --border-blue: 39, 129, 246, 0.5;

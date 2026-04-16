@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:latest
+    restart: always
+    ports:
+      - '8080:8080'
+    volumes:
+      - evolution_instances:/evolution/instances
+    environment:
+      - SERVER_URL=http://localhost:8080
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-your-evolution-api-key}
+      # Chatwoot integration
+      - CHATWOOT_ACCOUNT_ID=${CHATWOOT_ACCOUNT_ID:-1}
+      - CHATWOOT_TOKEN=${CHATWOOT_BOT_TOKEN:-}
+      - CHATWOOT_URL=${CHATWOOT_URL:-http://rails:3000}
+      - CHATWOOT_SIGN_MSG=false
+      - CHATWOOT_REOPEN_CONVERSATION=true
+      - CHATWOOT_CONVERSATION_PENDING=true
+      # Database (shares Chatwoot's Postgres)
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://postgres:@postgres:5432/evolution_api
+      # Redis (shares Chatwoot's Redis)
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://default:${REDIS_PASSWORD:-}@redis:6379/3
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_LOCAL_ENABLED=false
+      # WhatsApp / Baileys config
+      - WA_BUSINESS_TOKEN_WEBHOOK=evolution
+      - CONFIG_SESSION_PHONE_CLIENT=Evolution API
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - QRCODE_LIMIT=30
+      - LOG_LEVEL=WARN
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - default
+
+volumes:
+  evolution_instances:

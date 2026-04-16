@@ -26,8 +26,8 @@ import profile from './profile/profile.routes';
 import security from './security/security.routes';
 import conversationWorkflow from './conversationWorkflow/conversationWorkflow.routes';
 import captain from './captain/captain.routes';
-import whatsappTemplates from './whatsappTemplates/whatsappTemplates.routes';
-import whatsappAccountStatus from './whatsappAccountStatus/whatsappAccountStatus.routes';
+import botEditor from './botEditor/botEditor.routes';
+import botsRoutes from './bots/bots.routes';
 
 export default {
   routes: [
@@ -69,7 +69,7 @@ export default {
     ...security.routes,
     ...conversationWorkflow.routes,
     ...captain.routes,
-    ...whatsappTemplates.routes,
-    ...whatsappAccountStatus.routes,
+    ...botEditor.routes,
+    ...botsRoutes.routes,
   ],
 };

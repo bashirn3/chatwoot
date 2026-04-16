@@ -54,10 +54,12 @@ const bulkCheckboxState = computed({
 <template>
   <transition
     name="slide-fade"
-    enter-active-class="transition-all duration-300 ease-out"
-    enter-from-class="opacity-0 transform ltr:-translate-x-4 rtl:translate-x-4"
-    enter-to-class="opacity-100 transform translate-x-0"
-    leave-active-class="hidden opacity-0"
+    enter-active-class="transition-[opacity,transform] duration-200 ease-out"
+    enter-from-class="opacity-0 ltr:-translate-x-4 rtl:translate-x-4"
+    enter-to-class="opacity-100 translate-x-0"
+    leave-active-class="transition-[opacity,transform] duration-150 ease-in"
+    leave-from-class="opacity-100 translate-x-0"
+    leave-to-class="opacity-0 ltr:-translate-x-4 rtl:translate-x-4"
   >
     <div
       v-if="hasSelected"
@@ -88,6 +90,7 @@ const bulkCheckboxState = computed({
             sm
             ruby
             ghost
+            type="button"
             class="!px-1.5"
             icon="i-lucide-trash"
             @click="emit('bulkDelete')"

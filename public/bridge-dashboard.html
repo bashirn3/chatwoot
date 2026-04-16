@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wasup — Sign In</title>
+  <script
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_bGVhcm5pbmctbWFsYW11dGUtMTQuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{
+      background:#000;color:#edeeef;
+      font-family:'Inter',-apple-system,system-ui,sans-serif;
+      min-height:100vh;overflow:hidden;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* ── Matrix background ── */
+    .matrix-bg{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      display:grid;
+      grid-template-columns:repeat(16,1fr);
+      grid-template-rows:1fr;
+      width:100vmin;height:100vmin;
+      left:50%;top:0;transform:translateX(-50%);
+      color:#34ff34;
+    }
+    .matrix-col{
+      display:grid;
+      grid-template-columns:1fr;
+      grid-template-rows:repeat(16,1fr);
+      align-items:center;justify-content:center;
+      width:100%;height:100%;
+    }
+    .matrix-col>span{
+      font-size:5vmin;text-align:center;
+      opacity:0;
+      animation:glow-text 2s ease infinite;
+    }
+    @keyframes glow-text{
+      0%,49.9%{opacity:0;font-weight:100}
+      50%{opacity:1;font-weight:100}
+      100%{opacity:0;font-weight:900}
+    }
+
+    /* ── Sign-in overlay ── */
+    .sign-in-wrap{
+      position:fixed;inset:0;z-index:10;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.55);
+      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      opacity:0;animation:fade-in .8s ease forwards;
+    }
+    @keyframes fade-in{to{opacity:1}}
+
+    /* ── Loading state ── */
+    .loading-wrap{
+      position:fixed;inset:0;z-index:20;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:#000;gap:16px;
+    }
+    .spinner{width:24px;height:24px;border:2px solid #262626;border-top-color:#12a594;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:14px;color:#6e7077}
+  </style>
+</head>
+<body>
+  <div class="matrix-bg" id="matrix-bg"></div>
+
+  <div id="sign-in-area" class="sign-in-wrap" style="display:none">
+    <div id="clerk-sign-in"></div>
+  </div>
+
+  <div id="loading-area" class="loading-wrap" style="display:none">
+    <div class="spinner"></div>
+    <div class="loading-text">Authenticating&hellip;</div>
+  </div>
+
+  <script>
+    (function buildMatrix(){
+      const chars = '門弱考常日目寄別伝崎恵得評情作分';
+      const colOrder = [16,4,3,7,12,15,8,11,9,6,14,5,10,1,13,2];
+      const rows = 16, cols = 16;
+      const container = document.getElementById('matrix-bg');
+      const glowDur = 2;
+      const charOffsets = {
+        1:[1],2:[2],3:[4],4:[5],5:[6],6:[7],7:[8],8:[9],
+        9:[10],10:[11],11:[12],12:[13],13:[14],14:[15],15:[0],16:[3]
+      };
+      colOrder.forEach(cId => {
+        const col = document.createElement('div');
+        col.className = 'matrix-col';
+        const startIdx = charOffsets[cId]?.[0] ?? ((cId * 3) % chars.length);
+        for(let r = 1; r <= rows; r++){
+          const sp = document.createElement('span');
+          sp.textContent = chars[(startIdx + r - 1) % chars.length];
+          const delay = cId * (glowDur / cols) + r * (glowDur / rows);
+          sp.style.animationDelay = delay.toFixed(3) + 's';
+          col.appendChild(sp);
+        }
+        container.appendChild(col);
+      });
+    })();
+
+    window.addEventListener('load', async () => {
+      try {
+        const clerk = window.Clerk;
+        if (!clerk) {
+          document.getElementById('sign-in-area').style.display = 'flex';
+          return;
+        }
+        await clerk.load({
+          afterSignInUrl: '/bridge-dashboard',
+          afterSignUpUrl: '/bridge-dashboard',
+          appearance: {
+            variables: {
+              colorPrimary: '#12a594',
+              colorBackground: '#171717',
+              colorInputBackground: '#1c1c1c',
+              colorText: '#edeeef',
+              colorTextSecondary: '#b0b4ba',
+              colorInputText: '#edeeef',
+              colorNeutral: '#edeeef',
+              borderRadius: '10px',
+            },
+            elements: {
+              card: { backgroundColor: '#171717', borderColor: '#262626', border: '1px solid #262626', boxShadow: '0 24px 64px rgba(0,0,0,.6)' },
+              formButtonPrimary: { backgroundColor: '#12a594', color: '#fff' },
+              headerTitle: { color: '#edeeef' },
+              headerSubtitle: { color: '#6e7077' },
+              socialButtonsBlockButton: { backgroundColor: '#1c1c1c', borderColor: '#333', color: '#edeeef' },
+              socialButtonsBlockButtonText: { color: '#edeeef' },
+              footerActionText: { color: '#6e7077' },
+              footerActionLink: { color: '#12a594' },
+              dividerLine: { borderColor: '#262626' },
+              dividerText: { color: '#6e7077' },
+              formFieldLabel: { color: '#b0b4ba' },
+              formFieldInput: { backgroundColor: '#1c1c1c', borderColor: '#333', color: '#edeeef' },
+              identityPreviewEditButton: { color: '#12a594' },
+              footer: { display: 'none' },
+            },
+          },
+        });
+
+        if (clerk.user) {
+          document.getElementById('sign-in-area').style.display = 'none';
+          document.getElementById('loading-area').style.display = 'flex';
+          window.location.href = '/';
+        } else {
+          document.getElementById('sign-in-area').style.display = 'flex';
+          clerk.mountSignIn(document.getElementById('clerk-sign-in'), {
+            forceRedirectUrl: '/bridge-dashboard',
+            signUpForceRedirectUrl: '/bridge-dashboard',
+          });
+
+          clerk.addListener(({ user }) => {
+            if (user) {
+              document.getElementById('sign-in-area').style.display = 'none';
+              document.getElementById('loading-area').style.display = 'flex';
+              window.location.href = '/';
+            }
+          });
+        }
+      } catch(e) {
+        console.error('Clerk init error:', e);
+        document.getElementById('sign-in-area').style.display = 'flex';
+      }
+    });
+  </script>
+</body>
+</html>

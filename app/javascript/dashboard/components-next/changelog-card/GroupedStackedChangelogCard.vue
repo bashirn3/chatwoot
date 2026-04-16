@@ -36,7 +36,7 @@ const getCardClasses = index => {
     (index - props.currentIndex + stackedPosts.value.length) %
     stackedPosts.value.length;
   const base =
-    'relative transition-all duration-500 ease-out col-start-1 row-start-1';
+    'relative transition-[transform,opacity] duration-500 ease-out col-start-1 row-start-1';
 
   const layers = [
     'z-50 scale-100 translate-y-0 opacity-100',

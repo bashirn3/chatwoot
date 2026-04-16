@@ -153,14 +153,22 @@ const renderInstruction = instruction => () =>
         <div class="flex items-center gap-2">
           <!-- <Button label="Test" slate xs ghost class="!text-sm" />
           <span class="w-px h-4 bg-n-weak" /> -->
-          <Button icon="i-lucide-pen" slate xs ghost @click="startEdit" />
+          <Button
+            icon="i-lucide-pen"
+            slate
+            xs
+            ghost
+            type="button"
+            @click.stop="startEdit"
+          />
           <span class="w-px h-4 bg-n-weak" />
           <Button
             icon="i-lucide-trash"
             slate
             xs
             ghost
-            @click="emit('delete', id)"
+            type="button"
+            @click.stop="emit('delete', id)"
           />
         </div>
       </div>
@@ -241,11 +249,13 @@ const renderInstruction = instruction => () =>
           faded
           slate
           sm
+          type="button"
           :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.CANCEL')"
           @click="toggleEditing(false)"
         />
         <Button
           sm
+          type="button"
           :label="t('CAPTAIN.ASSISTANTS.SCENARIOS.UPDATE.UPDATE')"
           @click="onClickUpdate"
         />

@@ -10,12 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_04_200000) do
+
   # These extensions should be enabled to support this database
-  enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "uuid-ossp"
   enable_extension "vector"
 
   create_table "access_tokens", force: :cascade do |t|
@@ -73,6 +74,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.integer "status", default: 0
     t.jsonb "internal_attributes", default: {}, null: false
     t.jsonb "settings", default: {}
+    t.string "clerk_org_id"
+    t.index ["clerk_org_id"], name: "index_accounts_on_clerk_org_id", unique: true, where: "(clerk_org_id IS NOT NULL)"
     t.index ["status"], name: "index_accounts_on_status"
   end
 
@@ -579,7 +582,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.datetime "updated_at", null: false
     t.jsonb "message_templates", default: {}
     t.datetime "message_templates_last_updated", precision: nil
+    t.string "account_status", default: "ACTIVE"
+    t.string "quality_rating"
+    t.string "messaging_limit_tier"
+    t.integer "current_throughput"
+    t.datetime "account_status_last_synced_at"
+    t.string "business_verification_status"
+    t.string "display_name_status"
+    t.string "account_review_status"
+    t.jsonb "violation_info", default: {}
+    t.jsonb "restrictions", default: []
+    t.index ["account_status"], name: "index_channel_whatsapp_on_account_status"
     t.index ["phone_number"], name: "index_channel_whatsapp_on_phone_number", unique: true
+    t.index ["quality_rating"], name: "index_channel_whatsapp_on_quality_rating"
   end
 
   create_table "companies", force: :cascade do |t|
@@ -905,6 +920,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.jsonb "settings", default: {}
   end
 
+  create_table "knowledge_embeddings", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.text "content", null: false
+    t.vector "embedding", limit: 1536
+    t.string "source_type"
+    t.string "source_url"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_knowledge_embeddings_on_account_id"
+    t.index ["embedding"], name: "idx_knowledge_embeddings_vector", using: :ivfflat
+  end
+
   create_table "labels", force: :cascade do |t|
     t.string "title"
     t.text "description"
@@ -1046,6 +1074,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.index ["secondary_actor_type", "secondary_actor_id"], name: "uniq_secondary_actor_per_account_notifications"
     t.index ["user_id", "account_id", "snoozed_until", "read_at"], name: "idx_notifications_performance"
     t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "organizations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "clerk_org_id", null: false
+    t.integer "chatwoot_account_id", null: false
+    t.text "name"
+    t.timestamptz "created_at", default: -> { "now()" }
+    t.index ["clerk_org_id"], name: "idx_organizations_clerk_org_id"
+    t.unique_constraint ["clerk_org_id"], name: "organizations_clerk_org_id_key"
   end
 
   create_table "platform_app_permissibles", force: :cascade do |t|
@@ -1201,6 +1238,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.index ["name", "account_id"], name: "index_teams_on_name_and_account_id", unique: true
   end
 
+  create_table "user_mappings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "clerk_user_id", null: false
+    t.integer "chatwoot_user_id", null: false
+    t.text "email"
+    t.timestamptz "created_at", default: -> { "now()" }
+    t.index ["clerk_user_id"], name: "idx_user_mappings_clerk_user_id"
+    t.unique_constraint ["clerk_user_id"], name: "user_mappings_clerk_user_id_key"
+  end
+
   create_table "users", id: :serial, force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -1233,6 +1279,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.integer "consumed_timestep"
     t.boolean "otp_required_for_login", default: false
     t.text "otp_backup_codes"
+    t.string "clerk_user_id"
+    t.index ["clerk_user_id"], name: "index_users_on_clerk_user_id", unique: true, where: "(clerk_user_id IS NOT NULL)"
     t.index ["email"], name: "index_users_on_email"
     t.index ["otp_required_for_login"], name: "index_users_on_otp_required_for_login"
     t.index ["otp_secret"], name: "index_users_on_otp_secret", unique: true
@@ -1251,6 +1299,64 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
     t.jsonb "subscriptions", default: ["conversation_status_changed", "conversation_updated", "conversation_created", "contact_created", "contact_updated", "message_created", "message_updated", "webwidget_triggered"]
     t.string "name"
     t.index ["account_id", "url"], name: "index_webhooks_on_account_id_and_url", unique: true
+  end
+
+  create_table "whatsapp_account_status_events", force: :cascade do |t|
+    t.bigint "channel_whatsapp_id", null: false
+    t.bigint "account_id", null: false
+    t.string "event_type", null: false
+    t.string "previous_value"
+    t.string "new_value"
+    t.jsonb "event_data", default: {}
+    t.string "source"
+    t.datetime "event_timestamp"
+    t.boolean "notification_sent", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "idx_wa_status_events_account_time"
+    t.index ["account_id"], name: "index_whatsapp_account_status_events_on_account_id"
+    t.index ["channel_whatsapp_id", "event_type"], name: "idx_wa_status_events_channel_type"
+    t.index ["channel_whatsapp_id"], name: "index_whatsapp_account_status_events_on_channel_whatsapp_id"
+    t.index ["notification_sent"], name: "index_whatsapp_account_status_events_on_notification_sent"
+  end
+
+  create_table "whatsapp_templates", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "channel_whatsapp_id"
+    t.string "clerk_organization_id"
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.string "language", default: "en", null: false
+    t.string "category", null: false
+    t.string "meta_template_id"
+    t.string "status", default: "DRAFT", null: false
+    t.string "quality_score"
+    t.text "rejection_reason"
+    t.string "header_type"
+    t.text "header_content"
+    t.jsonb "header_params", default: {}
+    t.text "body_text", null: false
+    t.jsonb "body_params", default: []
+    t.text "footer_text"
+    t.jsonb "buttons", default: []
+    t.decimal "location_latitude", precision: 10, scale: 7
+    t.decimal "location_longitude", precision: 10, scale: 7
+    t.string "location_name"
+    t.string "location_address"
+    t.datetime "submitted_at"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "last_synced_at"
+    t.jsonb "meta_response", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name", "language"], name: "idx_whatsapp_templates_unique_name", unique: true
+    t.index ["account_id"], name: "index_whatsapp_templates_on_account_id"
+    t.index ["channel_whatsapp_id"], name: "index_whatsapp_templates_on_channel_whatsapp_id"
+    t.index ["clerk_organization_id", "status"], name: "idx_whatsapp_templates_org_status"
+    t.index ["clerk_organization_id"], name: "index_whatsapp_templates_on_clerk_organization_id"
+    t.index ["status", "last_synced_at"], name: "idx_whatsapp_templates_sync"
+    t.index ["user_id"], name: "index_whatsapp_templates_on_user_id"
   end
 
   create_table "working_hours", force: :cascade do |t|
@@ -1272,6 +1378,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_30_061021) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "inboxes", "portals"
+  add_foreign_key "whatsapp_account_status_events", "accounts"
+  add_foreign_key "whatsapp_account_status_events", "channel_whatsapp"
+  add_foreign_key "whatsapp_templates", "accounts"
+  add_foreign_key "whatsapp_templates", "channel_whatsapp"
+  add_foreign_key "whatsapp_templates", "users"
   create_trigger("accounts_after_insert_row_tr", :generated => true, :compatibility => 1).
       on("accounts").
       after(:insert).

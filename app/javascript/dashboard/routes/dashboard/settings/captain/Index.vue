@@ -59,15 +59,19 @@ const featureToggles = computed(() => [
   },
 ]);
 
+const isSelfHosted = computed(() => !isOnChatwootCloud.value && !isEnterprise);
+
 const shouldShowFeature = feature => {
-  // Cloud will always see these features as long as captain is enabled
   if (isOnChatwootCloud.value && captainEnabled) {
     return true;
   }
 
+  // Self-hosted community: show all features when captain is enabled
+  if (isSelfHosted.value && captainEnabled.value) {
+    return true;
+  }
+
   if (feature.enterprise) {
-    // if the app is in enterprise mode, then we can show the feature
-    // this is not the installation plan, but when the enterprise folder is missing
     return isEnterprise;
   }
 
@@ -75,15 +79,16 @@ const shouldShowFeature = feature => {
 };
 
 const isFeatureAccessible = feature => {
-  // Cloud will always see these features as long as captain is enabled
   if (isOnChatwootCloud.value && captainEnabled) {
     return true;
   }
 
+  // Self-hosted community with own API key: all captain features are accessible
+  if (isSelfHosted.value && captainEnabled.value) {
+    return true;
+  }
+
   if (feature.enterprise) {
-    // plan is shown, but is it accessible?
-    // This ensures that the instance has purchased the enterprise license, and only then we allow
-    // access
     return isEnterprise && enterprisePlanName === 'enterprise';
   }
 

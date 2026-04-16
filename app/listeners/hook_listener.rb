@@ -61,6 +61,7 @@ class HookListener < BaseListener
     supported_events_map = {
       'slack' => ['message.created'],
       'dialogflow' => ['message.created', 'message.updated'],
+      'router' => ['message.created', 'message.updated'],
       'google_translate' => ['message.created'],
       'leadsquared' => ['contact.updated', 'conversation.created', 'conversation.resolved']
     }

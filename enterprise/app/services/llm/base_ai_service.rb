@@ -21,7 +21,8 @@ class Llm::BaseAiService
   private
 
   def setup_model
-    config_value = InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_MODEL')&.value
+    config_value = InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_MODEL')&.value.presence ||
+                   ENV.fetch('CAPTAIN_OPEN_AI_MODEL', nil)
     @model = (config_value.presence || DEFAULT_MODEL)
   end
 

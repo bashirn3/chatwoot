@@ -1,0 +1,101 @@
+services:
+  chatwoot-rails:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: chatwoot-whitelabel:latest
+    restart: always
+    ports:
+      - '3000:3000'
+    env_file: .env
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+      - RAILS_SERVE_STATIC_FILES=true
+    volumes:
+      - ./config/white_label.yml:/app/config/white_label.yml:ro
+      - ./config/integration/apps.yml:/app/config/integration/apps.yml:ro
+      - ./app/models/inbox.rb:/app/app/models/inbox.rb:ro
+      - ./public/dashboard/images/wasup-logo.png:/app/public/dashboard/images/wasup-logo.png:ro
+      - ./app/controllers/api/v1/accounts/typebots_controller.rb:/app/app/controllers/api/v1/accounts/typebots_controller.rb:ro
+      - ./app/controllers/api/v1/accounts/whatsapp_bridge_controller.rb:/app/app/controllers/api/v1/accounts/whatsapp_bridge_controller.rb:ro
+      - ./app/services/whatsapp_bridge/incoming_message_service.rb:/app/app/services/whatsapp_bridge/incoming_message_service.rb:ro
+      - ./lib/integrations/router/processor_service.rb:/app/lib/integrations/router/processor_service.rb:ro
+      - ./config/routes.rb:/app/config/routes.rb:ro
+      - storage_data:/app/storage
+    depends_on:
+      - postgres
+      - redis
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+
+  chatwoot-sidekiq:
+    image: chatwoot-whitelabel:latest
+    restart: always
+    env_file: .env
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+    volumes:
+      - storage_data:/app/storage
+      - ./app/controllers/api/v1/accounts/whatsapp_bridge_controller.rb:/app/app/controllers/api/v1/accounts/whatsapp_bridge_controller.rb:ro
+      - ./app/services/whatsapp_bridge/incoming_message_service.rb:/app/app/services/whatsapp_bridge/incoming_message_service.rb:ro
+    depends_on:
+      - postgres
+      - redis
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  typebot-builder:
+    image: baptistearno/typebot-builder:latest
+    restart: always
+    ports:
+      - '127.0.0.1:3101:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-wasup-pg-secret-2026}@postgres:5432/typebot
+      - NEXTAUTH_URL=${TYPEBOT_BUILDER_URL:-http://localhost:3001}
+      - NEXTAUTH_URL_INTERNAL=http://typebot-builder:3000
+      - NEXT_PUBLIC_VIEWER_URL=${TYPEBOT_VIEWER_URL:-http://localhost:3002}
+      - ENCRYPTION_SECRET=${TYPEBOT_ENCRYPTION_SECRET:-wasup-typebot-enc-32char-secret!}
+      - NEXTAUTH_SECRET=${TYPEBOT_ENCRYPTION_SECRET:-wasup-typebot-enc-32char-secret!}
+      - ADMIN_EMAIL=${TYPEBOT_ADMIN_EMAIL:-admin@wasup.co}
+      - DEFAULT_WORKSPACE_PLAN=UNLIMITED
+      - DISABLE_SIGNUP=false
+      - NEXT_PUBLIC_DISABLE_SIGNUP=false
+    depends_on:
+      - postgres
+
+  typebot-viewer:
+    image: baptistearno/typebot-viewer:latest
+    restart: always
+    ports:
+      - '127.0.0.1:3102:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-wasup-pg-secret-2026}@postgres:5432/typebot
+      - NEXTAUTH_URL=${TYPEBOT_BUILDER_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_VIEWER_URL=${TYPEBOT_VIEWER_URL:-http://localhost:3002}
+      - ENCRYPTION_SECRET=${TYPEBOT_ENCRYPTION_SECRET:-wasup-typebot-enc-32char-secret!}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/init-typebot-db.sh:/docker-entrypoint-initdb.d/init-typebot-db.sh:ro
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-wasup-pg-secret-2026}
+      - POSTGRES_DB=chatwoot_production
+
+  redis:
+    image: redis:alpine
+    restart: always
+    command: ["sh", "-c", "redis-server --requirepass \"$REDIS_PASSWORD\""]
+    env_file: .env
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:

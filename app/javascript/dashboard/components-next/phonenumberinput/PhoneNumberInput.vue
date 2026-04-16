@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import parsePhoneNumber from 'libphonenumber-js';
+import parsePhoneNumber, { AsYouType } from 'libphonenumber-js';
 import { useI18n } from 'vue-i18n';
 import countries from 'shared/constants/countries.js';
 import { useVuelidate } from '@vuelidate/core';
@@ -59,6 +59,23 @@ const v$ = useVuelidate(rules, {
   phoneNumber,
   activeDialCode,
 });
+
+const formattedDisplayNumber = computed(() => {
+  if (!phoneNumber.value || !activeCountryCode.value) return phoneNumber.value;
+  try {
+    const formatter = new AsYouType(activeCountryCode.value);
+    const dialDigits = activeDialCode.value.replace('+', '');
+    const full = formatter.input(`+${dialDigits}${phoneNumber.value}`);
+    const prefixPattern = new RegExp(`^\\+${dialDigits}\\s*`);
+    return full.replace(prefixPattern, '');
+  } catch {
+    return phoneNumber.value;
+  }
+});
+
+const onPhoneInput = value => {
+  phoneNumber.value = String(value).replace(/\D/g, '');
+};
 
 const hasError = computed(() => v$.value.$invalid);
 
@@ -167,12 +184,13 @@ watch(
       :class="[inputBorderClass, { 'cursor-not-allowed opacity-50': disabled }]"
     >
       <Input
-        v-model="phoneNumber"
+        :model-value="formattedDisplayNumber"
         type="tel"
         :placeholder="placeholder"
         :disabled="disabled"
         custom-input-class="!border-0 !outline-none h-8 !py-0.5 !bg-transparent ltr:!pl-1 rtl:!pr-1"
         class="w-full !flex-row"
+        @update:model-value="onPhoneInput"
       >
         <template #prefix>
           <div class="flex items-center flex-shrink-0">

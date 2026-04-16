@@ -22,7 +22,6 @@ const emit = defineEmits(['submit', 'cancel']);
 const store = useStore();
 const { t } = useI18n();
 
-// Form data
 const formData = reactive({
   name: '',
   language: 'en',
@@ -38,59 +37,91 @@ const formData = reactive({
   location_address: '',
 });
 
-// Sample values for preview
 const sampleValues = reactive({
   header: {},
   body: {},
 });
 
-// UI state
 const isLoading = ref(false);
 const showSampleModal = ref(false);
 const showVariableHelp = ref(false);
 
-// Predefined variables that can be used in templates
 const predefinedVariables = [
-  { name: 'first_name', description: 'Contact\'s first name', example: 'John' },
-  { name: 'last_name', description: 'Contact\'s last name', example: 'Doe' },
-  { name: 'full_name', description: 'Contact\'s full name', example: 'John Doe' },
-  { name: 'email', description: 'Contact\'s email address', example: 'john@example.com' },
-  { name: 'phone', description: 'Contact\'s phone number', example: '+1234567890' },
-  { name: 'company', description: 'Contact\'s company name', example: 'Acme Inc' },
-  { name: 'order_id', description: 'Order or reference ID', example: 'ORD-12345' },
+  { name: 'first_name', description: "Contact's first name", example: 'John' },
+  { name: 'last_name', description: "Contact's last name", example: 'Doe' },
+  {
+    name: 'full_name',
+    description: "Contact's full name",
+    example: 'John Doe',
+  },
+  {
+    name: 'email',
+    description: "Contact's email address",
+    example: 'john@example.com',
+  },
+  {
+    name: 'phone',
+    description: "Contact's phone number",
+    example: '+1234567890',
+  },
+  {
+    name: 'company',
+    description: "Contact's company name",
+    example: 'Acme Inc',
+  },
+  {
+    name: 'order_id',
+    description: 'Order or reference ID',
+    example: 'ORD-12345',
+  },
   { name: 'amount', description: 'Amount or price', example: '$99.99' },
   { name: 'date', description: 'Date value', example: 'Jan 15, 2026' },
   { name: 'time', description: 'Time value', example: '2:30 PM' },
   { name: 'link', description: 'URL or link', example: 'https://example.com' },
-  { name: 'code', description: 'Verification or coupon code', example: 'ABC123' },
+  {
+    name: 'code',
+    description: 'Verification or coupon code',
+    example: 'ABC123',
+  },
 ];
 
-// Languages and categories
-const languages = computed(() => store.getters['whatsappTemplates/getLanguages'] || { en: 'English' });
-const samples = computed(() => store.getters['whatsappTemplates/getSamples'] || {});
+const languages = computed(
+  () => store.getters['whatsappTemplates/getLanguages'] || { en: 'English' }
+);
+const samples = computed(
+  () => store.getters['whatsappTemplates/getSamples'] || {}
+);
 
 const categories = [
-  { value: 'UTILITY', label: 'Utility', description: 'Updates, confirmations, reminders' },
-  { value: 'MARKETING', label: 'Marketing', description: 'Promotions, offers, newsletters' },
-  { value: 'AUTHENTICATION', label: 'Authentication', description: 'OTP, verification codes' },
+  { value: 'UTILITY', labelKey: 'WHATSAPP_TEMPLATES.CATEGORIES.UTILITY' },
+  { value: 'MARKETING', labelKey: 'WHATSAPP_TEMPLATES.CATEGORIES.MARKETING' },
+  {
+    value: 'AUTHENTICATION',
+    labelKey: 'WHATSAPP_TEMPLATES.CATEGORIES.AUTHENTICATION',
+  },
 ];
 
 const headerTypes = [
-  { value: null, label: 'None' },
-  { value: 'TEXT', label: 'Text' },
-  { value: 'IMAGE', label: 'Image' },
-  { value: 'VIDEO', label: 'Video' },
-  { value: 'DOCUMENT', label: 'Document' },
-  { value: 'LOCATION', label: 'Location' },
+  { value: null, labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.NONE' },
+  { value: 'TEXT', labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.TEXT' },
+  { value: 'IMAGE', labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.IMAGE' },
+  { value: 'VIDEO', labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.VIDEO' },
+  { value: 'DOCUMENT', labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.DOCUMENT' },
+  { value: 'LOCATION', labelKey: 'WHATSAPP_TEMPLATES.HEADER_TYPES.LOCATION' },
 ];
 
 const buttonTypes = [
-  { value: 'QUICK_REPLY', label: 'Quick Reply' },
-  { value: 'URL', label: 'URL Button' },
-  { value: 'PHONE_NUMBER', label: 'Phone Number' },
+  {
+    value: 'QUICK_REPLY',
+    labelKey: 'WHATSAPP_TEMPLATES.BUTTON_TYPES.QUICK_REPLY',
+  },
+  { value: 'URL', labelKey: 'WHATSAPP_TEMPLATES.BUTTON_TYPES.URL' },
+  {
+    value: 'PHONE_NUMBER',
+    labelKey: 'WHATSAPP_TEMPLATES.BUTTON_TYPES.PHONE_NUMBER',
+  },
 ];
 
-// Computed
 const bodyCharCount = computed(() => formData.body_text?.length || 0);
 const bodyVariableCount = computed(() => {
   const matches = formData.body_text?.match(/\{\{(\d+)\}\}/g);
@@ -110,12 +141,10 @@ const isMediaHeader = computed(() => {
   return ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formData.header_type);
 });
 
-// Helper to format variable placeholder for display
-const formatVarLabel = (num) => {
+const formatVarLabel = num => {
   return '{{' + num + '}}';
 };
 
-// Methods
 const loadTemplate = () => {
   if (props.template) {
     Object.assign(formData, {
@@ -132,7 +161,7 @@ const loadTemplate = () => {
       location_name: props.template.location_name || '',
       location_address: props.template.location_address || '',
     });
-    
+
     if (props.template.body_params) {
       props.template.body_params.forEach(param => {
         sampleValues.body[param.index] = param.example;
@@ -141,7 +170,7 @@ const loadTemplate = () => {
   }
 };
 
-const loadSample = (sampleKey) => {
+const loadSample = sampleKey => {
   const sample = samples.value[sampleKey];
   if (sample) {
     Object.assign(formData, {
@@ -159,12 +188,12 @@ const loadSample = (sampleKey) => {
   }
 };
 
-const insertVariable = (field) => {
+const insertVariable = field => {
   const currentText = formData[field] || '';
   const existingVars = currentText.match(/\{\{(\d+)\}\}/g) || [];
   const nextVar = existingVars.length + 1;
   formData[field] = currentText + `{{${nextVar}}}`;
-  
+
   if (field === 'body_text') {
     sampleValues.body[nextVar] = `Example ${nextVar}`;
   } else if (field === 'header_content') {
@@ -177,8 +206,7 @@ const insertPredefinedVariable = (variable, field = 'body_text') => {
   const existingVars = currentText.match(/\{\{(\d+)\}\}/g) || [];
   const nextVar = existingVars.length + 1;
   formData[field] = currentText + `{{${nextVar}}}`;
-  
-  // Set the example value from predefined variable
+
   if (field === 'body_text') {
     sampleValues.body[nextVar] = variable.example;
   } else if (field === 'header_content') {
@@ -186,21 +214,21 @@ const insertPredefinedVariable = (variable, field = 'body_text') => {
   }
 };
 
-const addButton = (type) => {
+const addButton = type => {
   if (!canAddButton.value) return;
-  
+
   const newButton = { type, text: '' };
-  
+
   if (type === 'URL') {
     newButton.url = '';
   } else if (type === 'PHONE_NUMBER') {
     newButton.phone_number = '';
   }
-  
+
   formData.buttons.push(newButton);
 };
 
-const removeButton = (index) => {
+const removeButton = index => {
   formData.buttons.splice(index, 1);
 };
 
@@ -209,26 +237,30 @@ const handleSubmit = async () => {
     useAlert(t('WHATSAPP_TEMPLATES.VALIDATION_ERROR'));
     return;
   }
-  
+
   isLoading.value = true;
-  
+
   try {
-    const bodyParams = Object.entries(sampleValues.body).map(([index, example]) => ({
-      index: parseInt(index),
-      example,
-    }));
-    
-    const headerParams = Object.entries(sampleValues.header).map(([index, example]) => ({
-      index: parseInt(index),
-      example,
-    }));
-    
+    const bodyParams = Object.entries(sampleValues.body).map(
+      ([index, example]) => ({
+        index: parseInt(index, 10),
+        example,
+      })
+    );
+
+    const headerParams = Object.entries(sampleValues.header).map(
+      ([index, example]) => ({
+        index: parseInt(index, 10),
+        example,
+      })
+    );
+
     const templateData = {
       ...formData,
       body_params: bodyParams,
       header_params: headerParams,
     };
-    
+
     emit('submit', templateData);
   } catch (error) {
     useAlert(error.message || t('WHATSAPP_TEMPLATES.SAVE_ERROR'));
@@ -241,16 +273,14 @@ const handleCancel = () => {
   emit('cancel');
 };
 
-// Watchers
 watch(() => props.template, loadTemplate, { immediate: true });
 
-// Lifecycle
 onMounted(async () => {
   try {
     await store.dispatch('whatsappTemplates/fetchLanguages');
     await store.dispatch('whatsappTemplates/fetchSamples');
   } catch (e) {
-    console.error('Failed to load template resources:', e);
+    // noop
   }
 });
 </script>
@@ -261,239 +291,333 @@ onMounted(async () => {
     <div class="flex-1 overflow-y-auto overflow-x-visible pr-2">
       <!-- Header Actions -->
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-semibold">
-          {{ mode === 'create' ? $t('WHATSAPP_TEMPLATES.CREATE_TITLE') : $t('WHATSAPP_TEMPLATES.EDIT_TITLE') }}
+        <h2 class="text-xl font-semibold text-n-slate-12">
+          {{
+            mode === 'create'
+              ? $t('WHATSAPP_TEMPLATES.CREATE_TITLE')
+              : $t('WHATSAPP_TEMPLATES.EDIT_TITLE')
+          }}
         </h2>
         <Button
-          label="Load Sample"
+          :label="$t('WHATSAPP_TEMPLATES.LOAD_SAMPLE')"
           slate
           faded
           sm
           @click="showSampleModal = true"
         />
       </div>
-      
+
       <!-- Basic Info -->
       <div class="mb-6">
-        <label class="block text-sm font-medium mb-2">
+        <label class="block text-sm font-medium mb-2 text-n-slate-12">
           {{ $t('WHATSAPP_TEMPLATES.NAME') }}
-          <span class="text-red-500">*</span>
+          <span class="text-n-ruby-9">*</span>
         </label>
         <input
           v-model="formData.name"
           type="text"
-          class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+          class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
           :placeholder="$t('WHATSAPP_TEMPLATES.NAME_PLACEHOLDER')"
           :disabled="mode === 'edit' && template?.status !== 'DRAFT'"
         />
-        <p class="text-xs text-slate-500 mt-1">
+        <p class="text-xs text-n-slate-11 mt-1">
           {{ $t('WHATSAPP_TEMPLATES.NAME_HELP') }}
         </p>
       </div>
-      
+
       <div class="grid grid-cols-2 gap-4 mb-6">
         <div>
-          <label class="block text-sm font-medium mb-2">
+          <label class="block text-sm font-medium mb-2 text-n-slate-12">
             {{ $t('WHATSAPP_TEMPLATES.LANGUAGE') }}
           </label>
           <div class="relative">
-            <select 
-              v-model="formData.language" 
-              class="w-full h-10 px-3 pr-10 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
-              style="appearance: none; -webkit-appearance: none; -moz-appearance: none;"
+            <select
+              v-model="formData.language"
+              class="w-full h-10 px-3 pr-10 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
             >
-              <option 
-                v-for="(label, code) in languages" 
-                :key="code" 
+              <option
+                v-for="(label, code) in languages"
+                :key="code"
                 :value="code"
               >
                 {{ label }}
               </option>
             </select>
-            <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <svg
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-n-slate-10 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
-        
+
         <div>
-          <label class="block text-sm font-medium mb-2">
+          <label class="block text-sm font-medium mb-2 text-n-slate-12">
             {{ $t('WHATSAPP_TEMPLATES.CATEGORY') }}
           </label>
           <div class="relative">
-            <select 
-              v-model="formData.category" 
-              class="w-full h-10 px-3 pr-10 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
-              style="appearance: none; -webkit-appearance: none; -moz-appearance: none;"
+            <select
+              v-model="formData.category"
+              class="w-full h-10 px-3 pr-10 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
             >
-              <option 
-                v-for="cat in categories" 
-                :key="cat.value" 
+              <option
+                v-for="cat in categories"
+                :key="cat.value"
                 :value="cat.value"
               >
-                {{ cat.label }}
+                {{ $t(cat.labelKey) }}
               </option>
             </select>
-            <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <svg
+              class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-n-slate-10 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
       </div>
-      
+
       <!-- Header Section -->
-      <div class="border-t border-slate-200 pt-6 mb-6">
-        <h3 class="font-medium mb-4">{{ $t('WHATSAPP_TEMPLATES.HEADER') }}</h3>
-        
+      <div class="border-t border-n-weak pt-6 mb-6">
+        <h3 class="font-medium mb-4 text-n-slate-12">
+          {{ $t('WHATSAPP_TEMPLATES.HEADER') }}
+        </h3>
+
         <div class="flex flex-wrap gap-2 mb-4">
           <button
             v-for="ht in headerTypes"
             :key="ht.value"
+            class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
             :class="[
-              'px-3 py-1.5 text-sm rounded-lg border transition-colors',
-              formData.header_type === ht.value 
-                ? 'bg-woot-500 text-white border-woot-500' 
-                : 'bg-white border-slate-200 hover:border-woot-300'
+              formData.header_type === ht.value
+                ? 'bg-woot-500 text-white border-woot-500'
+                : 'bg-n-alpha-black2 border-n-weak text-n-slate-12 hover:border-woot-300',
             ]"
             @click="formData.header_type = ht.value"
           >
-            {{ ht.label }}
+            {{ $t(ht.labelKey) }}
           </button>
         </div>
-        
+
         <!-- Text Header -->
         <div v-if="formData.header_type === 'TEXT'" class="mb-4">
           <div class="flex gap-2">
             <input
               v-model="formData.header_content"
               type="text"
-              class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+              class="flex-1 px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
               :placeholder="$t('WHATSAPP_TEMPLATES.HEADER_TEXT_PLACEHOLDER')"
               maxlength="60"
             />
             <Button
-              label="+ Variable"
+              :label="$t('WHATSAPP_TEMPLATES.ADD_VARIABLE')"
               slate
               faded
               sm
               @click="insertVariable('header_content')"
             />
           </div>
-          <p class="text-xs text-slate-500 mt-1">{{ formData.header_content?.length || 0 }}/60 characters</p>
+          <p class="text-xs text-n-slate-11 mt-1">
+            {{
+              $t('WHATSAPP_TEMPLATES.CHAR_COUNT', {
+                current: formData.header_content?.length || 0,
+                max: 60,
+              })
+            }}
+          </p>
         </div>
-        
-        <!-- Media Headers (Image, Video, Document) -->
+
+        <!-- Media Headers -->
         <div v-if="isMediaHeader" class="mb-4">
-          <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div class="p-4 bg-n-alpha-black2 rounded-lg border border-n-weak">
             <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
-                <svg v-if="formData.header_type === 'IMAGE'" class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              <div
+                class="w-10 h-10 rounded-lg bg-n-alpha-black2 border border-n-weak flex items-center justify-center"
+              >
+                <svg
+                  v-if="formData.header_type === 'IMAGE'"
+                  class="w-5 h-5 text-n-slate-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
-                <svg v-else-if="formData.header_type === 'VIDEO'" class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                <svg
+                  v-else-if="formData.header_type === 'VIDEO'"
+                  class="w-5 h-5 text-n-slate-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
-                <svg v-else-if="formData.header_type === 'DOCUMENT'" class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <svg
+                  v-else-if="formData.header_type === 'DOCUMENT'"
+                  class="w-5 h-5 text-n-slate-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
               <div>
-                <p class="font-medium text-sm">{{ formData.header_type }} Header</p>
-                <p class="text-xs text-slate-500">Enter a sample URL for the media file</p>
+                <p class="font-medium text-sm text-n-slate-12">
+                  {{
+                    $t('WHATSAPP_TEMPLATES.MEDIA_HEADER_TITLE', {
+                      type: formData.header_type,
+                    })
+                  }}
+                </p>
+                <p class="text-xs text-n-slate-11">
+                  {{ $t('WHATSAPP_TEMPLATES.MEDIA_SAMPLE_URL') }}
+                </p>
               </div>
             </div>
             <input
               v-model="formData.header_content"
               type="url"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              :placeholder="formData.header_type === 'IMAGE' 
-                ? 'https://example.com/image.jpg' 
-                : formData.header_type === 'VIDEO' 
-                  ? 'https://example.com/video.mp4' 
-                  : 'https://example.com/document.pdf'"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="
+                formData.header_type === 'IMAGE'
+                  ? 'https://example.com/image.jpg'
+                  : formData.header_type === 'VIDEO'
+                    ? 'https://example.com/video.mp4'
+                    : 'https://example.com/document.pdf'
+              "
             />
-            <p class="text-xs text-slate-500 mt-2">
-              <strong>Note:</strong> When sending, you'll provide the actual media URL. This is just a sample for template approval.
+            <p class="text-xs text-n-slate-11 mt-2">
+              {{ $t('WHATSAPP_TEMPLATES.MEDIA_SAMPLE_NOTE') }}
             </p>
           </div>
         </div>
-        
+
         <!-- Location Header -->
         <div v-if="formData.header_type === 'LOCATION'" class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm mb-1">Latitude</label>
+              <label class="block text-sm mb-1 text-n-slate-12">{{
+                $t('WHATSAPP_TEMPLATES.LOCATION.LATITUDE')
+              }}</label>
               <input
                 v-model="formData.location_latitude"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                placeholder="e.g., 37.7749"
+                class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+                :placeholder="
+                  $t('WHATSAPP_TEMPLATES.LOCATION.LATITUDE_PLACEHOLDER')
+                "
               />
             </div>
             <div>
-              <label class="block text-sm mb-1">Longitude</label>
+              <label class="block text-sm mb-1 text-n-slate-12">{{
+                $t('WHATSAPP_TEMPLATES.LOCATION.LONGITUDE')
+              }}</label>
               <input
                 v-model="formData.location_longitude"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-                placeholder="e.g., -122.4194"
+                class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+                :placeholder="
+                  $t('WHATSAPP_TEMPLATES.LOCATION.LONGITUDE_PLACEHOLDER')
+                "
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm mb-1">Location Name</label>
+            <label class="block text-sm mb-1 text-n-slate-12">{{
+              $t('WHATSAPP_TEMPLATES.LOCATION.NAME')
+            }}</label>
             <input
               v-model="formData.location_name"
               type="text"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              placeholder="e.g., Our Office"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="$t('WHATSAPP_TEMPLATES.LOCATION.NAME_PLACEHOLDER')"
             />
           </div>
           <div>
-            <label class="block text-sm mb-1">Address</label>
+            <label class="block text-sm mb-1 text-n-slate-12">{{
+              $t('WHATSAPP_TEMPLATES.LOCATION.ADDRESS')
+            }}</label>
             <input
               v-model="formData.location_address"
               type="text"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              placeholder="e.g., 123 Main St, City, Country"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="
+                $t('WHATSAPP_TEMPLATES.LOCATION.ADDRESS_PLACEHOLDER')
+              "
             />
           </div>
         </div>
       </div>
-      
+
       <!-- Body Section -->
-      <div class="border-t border-slate-200 pt-6 mb-6">
+      <div class="border-t border-n-weak pt-6 mb-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="font-medium">
+          <h3 class="font-medium text-n-slate-12">
             {{ $t('WHATSAPP_TEMPLATES.BODY') }}
-            <span class="text-red-500">*</span>
+            <span class="text-n-ruby-9">*</span>
           </h3>
-          <button 
+          <button
             class="text-sm text-woot-500 hover:text-woot-600"
             @click="showVariableHelp = !showVariableHelp"
           >
-            How do variables work?
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_HELP_LINK') }}
           </button>
         </div>
-        
+
         <!-- Variable Help Panel -->
-        <div v-if="showVariableHelp" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 class="font-medium text-blue-900 mb-2">Understanding Variables</h4>
-          <p class="text-sm text-blue-800 mb-3">
-            Variables are placeholders in your template that get replaced with actual values when sending messages.
-            WhatsApp uses numbered placeholders like <code class="bg-blue-100 px-1 rounded">{'{{1}}'}</code>, <code class="bg-blue-100 px-1 rounded">{'{{2}}'}</code>, etc.
+        <div
+          v-if="showVariableHelp"
+          class="mb-4 p-4 bg-n-blue-2 dark:bg-n-blue-2 border border-n-blue-5 dark:border-n-blue-5 rounded-lg"
+        >
+          <h4 class="font-medium text-n-blue-11 mb-2">
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_HELP_TITLE') }}
+          </h4>
+          <p class="text-sm text-n-blue-11 mb-3">
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_HELP_DESC') }}
           </p>
-          <p class="text-sm text-blue-800 mb-3">
-            <strong>Example:</strong> "Hi {'{{1}}'}, your order {'{{2}}'} is ready!" becomes "Hi John, your order #12345 is ready!"
+          <p class="text-sm text-n-blue-11 mb-3">
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_HELP_EXAMPLE') }}
           </p>
-          <p class="text-sm text-blue-800 mb-2">
-            <strong>Click a variable below to insert it:</strong>
+          <p class="text-sm text-n-blue-11 mb-2">
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_HELP_INSERT') }}
           </p>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="variable in predefinedVariables"
               :key="variable.name"
-              class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+              class="px-2 py-1 text-xs bg-n-blue-3 dark:bg-n-blue-3 text-n-blue-11 rounded hover:bg-n-blue-4 dark:hover:bg-n-blue-4 transition-colors"
               :title="variable.description"
               @click="insertPredefinedVariable(variable)"
             >
@@ -501,138 +625,215 @@ onMounted(async () => {
             </button>
           </div>
         </div>
-        
+
         <textarea
           v-model="formData.body_text"
-          class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"
+          class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm resize-none bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
           :placeholder="$t('WHATSAPP_TEMPLATES.BODY_PLACEHOLDER')"
           rows="6"
           maxlength="1024"
-        ></textarea>
+        />
         <div class="flex justify-between items-center mt-2">
           <Button
-            label="+ Add Variable"
+            :label="$t('WHATSAPP_TEMPLATES.ADD_BODY_VARIABLE')"
             slate
             faded
             sm
             @click="insertVariable('body_text')"
           />
-          <span :class="['text-xs', bodyCharCount > 900 ? 'text-orange-500' : 'text-slate-500']">
-            {{ bodyCharCount }}/1024
+          <span
+            class="text-xs"
+            :class="[
+              bodyCharCount > 900 ? 'text-n-amber-10' : 'text-n-slate-11',
+            ]"
+          >
+            {{
+              $t('WHATSAPP_TEMPLATES.CHAR_COUNT', {
+                current: bodyCharCount,
+                max: 1024,
+              })
+            }}
           </span>
         </div>
-        
+
         <!-- Variable Examples -->
-        <div v-if="bodyVariableCount > 0" class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <label class="block text-sm font-medium mb-2">
+        <div
+          v-if="bodyVariableCount > 0"
+          class="mt-4 p-4 bg-n-alpha-black2 rounded-lg border border-n-weak"
+        >
+          <label class="block text-sm font-medium mb-2 text-n-slate-12">
             {{ $t('WHATSAPP_TEMPLATES.VARIABLE_EXAMPLES') }}
           </label>
-          <p class="text-xs text-slate-500 mb-4">
-            Provide example values for each variable. These are used for template approval and preview.
+          <p class="text-xs text-n-slate-11 mb-4">
+            {{ $t('WHATSAPP_TEMPLATES.VARIABLE_EXAMPLES_DESC') }}
           </p>
           <div class="space-y-3">
-            <div v-for="i in bodyVariableCount" :key="i" class="flex items-center gap-3">
-              <span class="text-xs font-mono bg-woot-100 text-woot-700 px-2 py-1.5 rounded font-semibold min-w-[50px] text-center border border-woot-200">
+            <div
+              v-for="i in bodyVariableCount"
+              :key="i"
+              class="flex items-center gap-3"
+            >
+              <span
+                class="text-xs font-mono bg-woot-100 dark:bg-woot-900/30 text-woot-700 dark:text-woot-300 px-2 py-1.5 rounded font-semibold min-w-[50px] text-center border border-woot-200 dark:border-woot-700"
+              >
                 {{ formatVarLabel(i) }}
               </span>
               <input
                 v-model="sampleValues.body[i]"
                 type="text"
-                class="flex-1 min-w-[150px] h-9 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
-                :placeholder="`Enter example for variable ${i}`"
+                class="flex-1 min-w-[150px] h-9 px-3 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+                :placeholder="
+                  $t('WHATSAPP_TEMPLATES.VARIABLE_EXAMPLE_PLACEHOLDER', {
+                    index: i,
+                  })
+                "
               />
-              <select 
-                class="h-9 px-3 pr-8 border border-slate-300 rounded-lg text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
-                style="appearance: none; -webkit-appearance: none; min-width: 140px;"
-                @change="(e) => { if (e.target.value) { sampleValues.body[i] = predefinedVariables.find(v => v.name === e.target.value)?.example || ''; } }"
-              >
-                <option value="">Quick fill...</option>
-                <option v-for="v in predefinedVariables" :key="v.name" :value="v.name">
-                  {{ v.name }} ({{ v.example }})
-                </option>
-              </select>
+              <div class="relative">
+                <select
+                  class="h-9 px-3 pr-8 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 cursor-pointer appearance-none min-w-[140px] focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+                  @change="
+                    e => {
+                      if (e.target.value) {
+                        sampleValues.body[i] =
+                          predefinedVariables.find(
+                            v => v.name === e.target.value
+                          )?.example || '';
+                      }
+                    }
+                  "
+                >
+                  <option value="">
+                    {{ $t('WHATSAPP_TEMPLATES.QUICK_FILL') }}
+                  </option>
+                  <option
+                    v-for="v in predefinedVariables"
+                    :key="v.name"
+                    :value="v.name"
+                  >
+                    {{ `${v.name} (${v.example})` }}
+                  </option>
+                </select>
+                <svg
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-n-slate-10 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Footer Section -->
-      <div class="border-t border-slate-200 pt-6 mb-6">
-        <h3 class="font-medium mb-4">{{ $t('WHATSAPP_TEMPLATES.FOOTER') }}</h3>
+      <div class="border-t border-n-weak pt-6 mb-6">
+        <h3 class="font-medium mb-4 text-n-slate-12">
+          {{ $t('WHATSAPP_TEMPLATES.FOOTER') }}
+        </h3>
         <input
           v-model="formData.footer_text"
           type="text"
-          class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+          class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
           :placeholder="$t('WHATSAPP_TEMPLATES.FOOTER_PLACEHOLDER')"
           maxlength="60"
         />
-        <p class="text-xs text-slate-500 mt-1">{{ formData.footer_text?.length || 0 }}/60 characters</p>
+        <p class="text-xs text-n-slate-11 mt-1">
+          {{
+            $t('WHATSAPP_TEMPLATES.CHAR_COUNT', {
+              current: formData.footer_text?.length || 0,
+              max: 60,
+            })
+          }}
+        </p>
       </div>
-      
+
       <!-- Buttons Section -->
-      <div class="border-t border-slate-200 pt-6 mb-6">
-        <h3 class="font-medium mb-4">{{ $t('WHATSAPP_TEMPLATES.BUTTONS') }}</h3>
-        
+      <div class="border-t border-n-weak pt-6 mb-6">
+        <h3 class="font-medium mb-4 text-n-slate-12">
+          {{ $t('WHATSAPP_TEMPLATES.BUTTONS') }}
+        </h3>
+
         <div v-if="canAddButton" class="flex flex-wrap gap-2 mb-4">
           <Button
             v-for="bt in buttonTypes"
             :key="bt.value"
-            :label="'+ ' + bt.label"
+            :label="'+ ' + $t(bt.labelKey)"
             slate
             faded
             sm
             @click="addButton(bt.value)"
           />
         </div>
-        <p v-else class="text-xs text-slate-500 mb-4">Maximum 3 buttons allowed</p>
-        
+        <p v-else class="text-xs text-n-slate-11 mb-4">
+          {{ $t('WHATSAPP_TEMPLATES.MAX_BUTTONS') }}
+        </p>
+
         <div v-if="formData.buttons.length > 0" class="space-y-4">
-          <div 
-            v-for="(button, index) in formData.buttons" 
+          <div
+            v-for="(button, index) in formData.buttons"
             :key="index"
-            class="p-4 border border-slate-200 rounded-lg"
+            class="p-4 border border-n-weak rounded-lg"
           >
             <div class="flex justify-between items-center mb-3">
-              <span class="text-sm font-medium">{{ button.type.replace('_', ' ') }}</span>
-              <button 
-                class="text-red-500 hover:text-red-600"
+              <span class="text-sm font-medium text-n-slate-12">{{
+                button.type.replace('_', ' ')
+              }}</span>
+              <button
+                class="text-n-ruby-9 hover:text-n-ruby-10"
                 @click="removeButton(index)"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
-            
+
             <input
               v-model="button.text"
               type="text"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-2"
-              placeholder="Button text"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm mb-2 bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="$t('WHATSAPP_TEMPLATES.BUTTON_TEXT_PLACEHOLDER')"
               maxlength="25"
             />
-            
+
             <input
               v-if="button.type === 'URL'"
               v-model="button.url"
               type="text"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              placeholder="https://example.com"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="$t('WHATSAPP_TEMPLATES.URL_PLACEHOLDER')"
             />
-            
+
             <input
               v-if="button.type === 'PHONE_NUMBER'"
               v-model="button.phone_number"
               type="text"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
-              placeholder="+1234567890"
+              class="w-full px-3 py-2 border border-n-weak rounded-lg text-sm bg-n-alpha-black2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-woot-500 focus:border-transparent"
+              :placeholder="$t('WHATSAPP_TEMPLATES.PHONE_PLACEHOLDER')"
             />
           </div>
         </div>
       </div>
-      
+
       <!-- Actions -->
-      <div class="flex justify-end gap-3 pt-6 border-t border-slate-200">
+      <div class="flex justify-end gap-3 pt-6 border-t border-n-weak">
         <Button
           :label="$t('WHATSAPP_TEMPLATES.CANCEL')"
           slate
@@ -640,51 +841,59 @@ onMounted(async () => {
           @click="handleCancel"
         />
         <Button
-          :label="mode === 'create' ? $t('WHATSAPP_TEMPLATES.CREATE') : $t('WHATSAPP_TEMPLATES.SAVE')"
+          :label="
+            mode === 'create'
+              ? $t('WHATSAPP_TEMPLATES.CREATE')
+              : $t('WHATSAPP_TEMPLATES.SAVE')
+          "
           :is-loading="isLoading"
           :disabled="!isValid"
           @click="handleSubmit"
         />
       </div>
     </div>
-    
+
     <!-- Right Side: Preview -->
     <div class="w-[380px] flex-shrink-0">
       <div class="sticky top-0">
-        <WhatsAppPreview 
-          :template="formData"
-          :sample-values="sampleValues"
-        />
+        <WhatsAppPreview :template="formData" :sample-values="sampleValues" />
       </div>
     </div>
-    
+
     <!-- Sample Modal -->
-    <div 
-      v-if="showSampleModal" 
+    <div
+      v-if="showSampleModal"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="showSampleModal = false"
     >
-      <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-4">{{ $t('WHATSAPP_TEMPLATES.SAMPLE_TEMPLATES') }}</h3>
-        
+      <div
+        class="bg-white dark:bg-n-solid-3 rounded-xl p-6 max-w-md w-full mx-4"
+      >
+        <h3 class="text-lg font-semibold mb-4 text-n-slate-12">
+          {{ $t('WHATSAPP_TEMPLATES.SAMPLE_TEMPLATES') }}
+        </h3>
+
         <div class="space-y-2 max-h-60 overflow-auto">
           <button
             v-for="(sample, key) in samples"
             :key="key"
-            class="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            class="w-full text-left p-3 border border-n-weak rounded-lg hover:bg-n-alpha-black2 transition-colors"
             @click="loadSample(key)"
           >
-            <p class="font-medium">{{ sample.name }}</p>
-            <p class="text-sm text-slate-500">{{ sample.category }}</p>
+            <p class="font-medium text-n-slate-12">{{ sample.name }}</p>
+            <p class="text-sm text-n-slate-11">{{ sample.category }}</p>
           </button>
-          <p v-if="Object.keys(samples).length === 0" class="text-sm text-slate-500 text-center py-4">
-            No sample templates available
+          <p
+            v-if="Object.keys(samples).length === 0"
+            class="text-sm text-n-slate-11 text-center py-4"
+          >
+            {{ $t('WHATSAPP_TEMPLATES.NO_SAMPLES') }}
           </p>
         </div>
-        
+
         <div class="flex justify-end mt-4">
           <Button
-            label="Close"
+            :label="$t('WHATSAPP_TEMPLATES.CLOSE')"
             slate
             faded
             @click="showSampleModal = false"

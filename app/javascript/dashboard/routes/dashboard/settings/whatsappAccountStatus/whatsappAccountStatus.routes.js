@@ -11,7 +11,10 @@ export default {
         {
           path: '',
           redirect: to => {
-            return { name: 'settings_whatsapp_account_status', params: to.params };
+            return {
+              name: 'settings_whatsapp_account_status',
+              params: to.params,
+            };
           },
         },
         {

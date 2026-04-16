@@ -1,18 +1,21 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
-import { useMapGetter, useStore } from 'dashboard/composables/store.js';
+import { useRoute } from 'vue-router';
+import { useMapGetter } from 'dashboard/composables/store.js';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
-const emit = defineEmits(['close', 'createAssistant']);
+const emit = defineEmits([
+  'close',
+  'selectAssistant',
+  'createAssistant',
+  'deleteAssistant',
+]);
 
 const { t } = useI18n();
 const route = useRoute();
-const router = useRouter();
-const store = useStore();
 
 const assistants = useMapGetter('captainAssistants/getRecords');
 
@@ -22,67 +25,20 @@ const isAssistantActive = assistant => {
   return assistant.id === Number(currentAssistantId.value);
 };
 
-const fetchDataForRoute = async (routeName, assistantId) => {
-  const dataFetchMap = {
-    captain_assistants_responses_index: async () => {
-      await store.dispatch('captainResponses/get', { assistantId });
-      await store.dispatch('captainResponses/fetchPendingCount', assistantId);
-    },
-    captain_assistants_responses_pending: async () => {
-      await store.dispatch('captainResponses/get', {
-        assistantId,
-        status: 'pending',
-      });
-    },
-    captain_assistants_documents_index: async () => {
-      await store.dispatch('captainDocuments/get', { assistantId });
-    },
-    captain_assistants_scenarios_index: async () => {
-      await store.dispatch('captainScenarios/get', { assistantId });
-    },
-    captain_assistants_playground_index: () => {
-      // Playground doesn't need pre-fetching, it loads on interaction
-    },
-    captain_assistants_inboxes_index: async () => {
-      await store.dispatch('captainInboxes/get', { assistantId });
-    },
-    captain_tools_index: async () => {
-      await store.dispatch('captainCustomTools/get', { page: 1 });
-    },
-    captain_assistants_settings_index: async () => {
-      await store.dispatch('captainAssistants/show', assistantId);
-    },
-  };
-
-  const fetchFn = dataFetchMap[routeName];
-  if (fetchFn) {
-    await fetchFn();
-  }
-};
-
-const handleAssistantChange = async assistant => {
+const handleAssistantChange = assistant => {
   if (isAssistantActive(assistant)) return;
-
-  const currentRouteName = route.name;
-  const targetRouteName =
-    currentRouteName || 'captain_assistants_responses_index';
-
-  await fetchDataForRoute(targetRouteName, assistant.id);
-
-  await router.push({
-    name: targetRouteName,
-    params: {
-      accountId: route.params.accountId,
-      assistantId: assistant.id,
-    },
-  });
-
-  emit('close');
+  emit('selectAssistant', assistant);
 };
 
 const openCreateAssistantDialog = () => {
   emit('createAssistant');
   emit('close');
+};
+
+const handleDeleteClick = (e, assistant) => {
+  e.stopPropagation();
+  e.preventDefault();
+  emit('deleteAssistant', assistant);
 };
 </script>
 
@@ -110,34 +66,41 @@ const openCreateAssistantDialog = () => {
         color="slate"
         icon="i-lucide-plus"
         size="sm"
+        type="button"
         class="!bg-n-alpha-2 hover:!bg-n-alpha-3"
         @click="openCreateAssistantDialog"
       />
     </div>
     <div v-if="assistants.length > 0" class="flex flex-col gap-2 px-4">
-      <Button
+      <div
         v-for="assistant in assistants"
         :key="assistant.id"
-        :label="assistant.name"
-        variant="ghost"
-        color="slate"
-        trailing-icon
-        :icon="isAssistantActive(assistant) ? 'i-lucide-check' : ''"
-        class="!justify-end !px-2 !py-2 hover:!bg-n-alpha-2 [&>.i-lucide-check]:text-n-teal-10 h-9"
-        size="sm"
+        class="group flex items-center gap-1 rounded-lg hover:bg-n-alpha-2 cursor-pointer"
         @click="handleAssistantChange(assistant)"
       >
-        <span class="text-sm font-medium truncate text-n-slate-12">
-          {{ assistant.name || '' }}
-        </span>
-        <Avatar
-          v-if="assistant"
-          :name="assistant.name"
-          :size="20"
-          icon-name="i-lucide-bot"
-          rounded-full
+        <div class="flex items-center gap-2 flex-1 min-w-0 px-2 py-2">
+          <Avatar
+            :name="assistant.name"
+            :size="20"
+            icon-name="i-lucide-bot"
+            rounded-full
+          />
+          <span class="text-sm font-medium truncate text-n-slate-12">
+            {{ assistant.name || '' }}
+          </span>
+        </div>
+        <i
+          v-if="isAssistantActive(assistant)"
+          class="i-lucide-check text-n-teal-10 size-4 shrink-0 mr-1"
         />
-      </Button>
+        <button
+          type="button"
+          class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-n-alpha-3 shrink-0 mr-1 transition-opacity"
+          @click="handleDeleteClick($event, assistant)"
+        >
+          <i class="i-lucide-trash-2 size-3.5 text-n-ruby-10" />
+        </button>
+      </div>
     </div>
     <div v-else class="flex flex-col items-center gap-2 px-4 py-3">
       <p class="text-sm text-n-slate-11">

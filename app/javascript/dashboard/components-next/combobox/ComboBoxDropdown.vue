@@ -58,10 +58,11 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    v-show="open"
-    class="absolute z-50 w-full mt-1 transition-opacity duration-200 border rounded-md shadow-lg bg-n-solid-1 border-n-strong"
-  >
+  <Transition name="dropdown-pop">
+    <div
+      v-if="open"
+      class="absolute z-50 w-full mt-1 border rounded-md shadow-lg bg-n-solid-1 border-n-strong"
+    >
     <div class="relative border-b border-n-strong">
       <span class="absolute i-lucide-search top-2.5 size-4 left-3" />
       <input
@@ -107,4 +108,5 @@ defineExpose({
       </li>
     </ul>
   </div>
+  </Transition>
 </template>

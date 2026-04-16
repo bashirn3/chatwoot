@@ -58,7 +58,8 @@ class Whatsapp::OneoffCampaignService
       return
     end
 
-    send_whatsapp_template_message(to: contact.phone_number)
+    resolved_params = resolve_liquid_params(campaign.template_params.deep_dup, contact)
+    send_whatsapp_template_message(to: contact.phone_number, template_params: resolved_params)
   end
 
   def process_audience(audience_labels)
@@ -70,10 +71,32 @@ class Whatsapp::OneoffCampaignService
     Rails.logger.info "Campaign #{campaign.id} processing completed"
   end
 
-  def send_whatsapp_template_message(to:)
+  def resolve_liquid_params(params, contact)
+    drops = { 'contact' => ContactDrop.new(contact) }
+    deep_resolve_liquid(params, drops)
+  end
+
+  def deep_resolve_liquid(obj, drops)
+    case obj
+    when String
+      return obj unless obj.include?('{{')
+
+      Liquid::Template.parse(obj).render(drops)
+    when Hash
+      obj.transform_values { |v| deep_resolve_liquid(v, drops) }
+    when Array
+      obj.map { |v| deep_resolve_liquid(v, drops) }
+    else
+      obj
+    end
+  rescue Liquid::Error
+    obj
+  end
+
+  def send_whatsapp_template_message(to:, template_params:)
     processor = Whatsapp::TemplateProcessorService.new(
       channel: channel,
-      template_params: campaign.template_params
+      template_params: template_params
     )
 
     name, namespace, lang_code, processed_parameters = processor.call

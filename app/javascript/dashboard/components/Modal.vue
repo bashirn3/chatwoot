@@ -139,13 +139,4 @@ onMounted(() => {
   }
 }
 
-.modal-enter,
-.modal-leave {
-  @apply opacity-0;
-}
-
-.modal-enter .modal-container,
-.modal-leave .modal-container {
-  transform: scale(1.1);
-}
 </style>

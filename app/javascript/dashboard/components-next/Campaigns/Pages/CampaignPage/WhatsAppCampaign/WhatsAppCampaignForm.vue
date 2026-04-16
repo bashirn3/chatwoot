@@ -9,7 +9,7 @@ import Input from 'dashboard/components-next/input/Input.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox.vue';
 import TagMultiSelectComboBox from 'dashboard/components-next/combobox/TagMultiSelectComboBox.vue';
-import WhatsAppTemplateParser from 'dashboard/components-next/whatsapp/WhatsAppTemplateParser.vue';
+import CampaignVariableMapper from './CampaignVariableMapper.vue';
 
 const emit = defineEmits(['submit', 'cancel']);
 
@@ -213,8 +213,8 @@ watch(
       </p>
     </div>
 
-    <!-- Template Parser -->
-    <WhatsAppTemplateParser
+    <!-- Template Variable Mapper -->
+    <CampaignVariableMapper
       v-if="selectedTemplate"
       ref="templateParserRef"
       :template="selectedTemplate"

@@ -11,6 +11,8 @@ class HookJob < MutexApplicationJob
       process_slack_integration(hook, event_name, event_data)
     when 'dialogflow'
       process_dialogflow_integration(hook, event_name, event_data)
+    when 'router'
+      process_router_integration(hook, event_name, event_data)
     when 'google_translate'
       google_translate_integration(hook, event_name, event_data)
     when 'leadsquared'
@@ -37,6 +39,12 @@ class HookJob < MutexApplicationJob
     return unless ['message.created', 'message.updated'].include?(event_name)
 
     Integrations::Dialogflow::ProcessorService.new(event_name: event_name, hook: hook, event_data: event_data).perform
+  end
+
+  def process_router_integration(hook, event_name, event_data)
+    return unless ['message.created', 'message.updated'].include?(event_name)
+
+    Integrations::Router::ProcessorService.new(event_name: event_name, hook: hook, event_data: event_data).perform
   end
 
   def google_translate_integration(hook, event_name, event_data)

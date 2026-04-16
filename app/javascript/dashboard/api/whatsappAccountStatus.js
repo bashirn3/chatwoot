@@ -29,7 +29,7 @@ class WhatsappAccountStatusAPI extends ApiClient {
   // Get status event history for an inbox
   getEvents(inboxId, { page = 1, perPage = 25 } = {}) {
     return axios.get(`${this.url}/../${inboxId}/account_status/events`, {
-      params: { page, per_page: perPage }
+      params: { page, per_page: perPage },
     });
   }
 
