@@ -101,8 +101,41 @@ export default {
       },
       immediate: true,
     },
+    '$store.getters.getCurrentUser': {
+      handler(user) {
+        if (user?.id && !this._intercomBooted) {
+          this._intercomBooted = true;
+          this.bootIntercom(user);
+        }
+      },
+      immediate: true,
+    },
   },
   methods: {
+    bootIntercom(user) {
+      const APP_ID = 'r2vrr26e';
+      if (!window.Intercom) {
+        const i = function (...args) {
+          i.c(args);
+        };
+        i.q = [];
+        i.c = function (args) {
+          i.q.push(args);
+        };
+        window.Intercom = i;
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = `https://widget.intercom.io/widget/${APP_ID}`;
+        document.head.appendChild(s);
+      }
+      window.Intercom('boot', {
+        app_id: APP_ID,
+        user_id: String(user.id),
+        name: user.name,
+        email: user.email,
+        created_at: Math.floor(new Date(user.created_at).getTime() / 1000),
+      });
+    },
     toggleMobileSidebar() {
       this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
     },
