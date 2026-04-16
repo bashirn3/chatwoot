@@ -31,6 +31,7 @@ const currentUser = useMapGetter('getCurrentUser');
 const currentUserAvailability = useMapGetter('getCurrentUserAvailability');
 const accountId = useMapGetter('getCurrentAccountId');
 const globalConfig = useMapGetter('globalConfig/get');
+const disabledSidebarItems = useMapGetter('globalConfig/disabledSidebarItems');
 const isFeatureEnabledonAccount = useMapGetter(
   'accounts/isFeatureEnabledonAccount'
 );
@@ -47,6 +48,7 @@ const showChatSupport = computed(() => {
 const menuItems = computed(() => {
   return [
     {
+      name: 'Contact Support',
       show: showChatSupport.value,
       showOnCustomBrandedInstance: false,
       label: t('SIDEBAR_ITEMS.CONTACT_SUPPORT'),
@@ -56,6 +58,7 @@ const menuItems = computed(() => {
       },
     },
     {
+      name: 'Keyboard Shortcuts',
       show: true,
       showOnCustomBrandedInstance: true,
       label: t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS'),
@@ -65,6 +68,7 @@ const menuItems = computed(() => {
       },
     },
     {
+      name: 'Profile Settings',
       show: true,
       showOnCustomBrandedInstance: true,
       label: t('SIDEBAR_ITEMS.PROFILE_SETTINGS'),
@@ -72,6 +76,7 @@ const menuItems = computed(() => {
       link: { name: 'profile_settings_index' },
     },
     {
+      name: 'Appearance',
       show: true,
       showOnCustomBrandedInstance: true,
       label: t('SIDEBAR_ITEMS.APPEARANCE'),
@@ -82,6 +87,7 @@ const menuItems = computed(() => {
       },
     },
     {
+      name: 'Docs',
       show: true,
       showOnCustomBrandedInstance: false,
       label: t('SIDEBAR_ITEMS.DOCS'),
@@ -91,6 +97,7 @@ const menuItems = computed(() => {
       target: '_blank',
     },
     {
+      name: 'Changelog',
       show: true,
       showOnCustomBrandedInstance: false,
       label: t('SIDEBAR_ITEMS.CHANGELOG'),
@@ -100,6 +107,7 @@ const menuItems = computed(() => {
       target: '_blank',
     },
     {
+      name: 'Super Admin Console',
       show: currentUser.value.type === 'SuperAdmin',
       showOnCustomBrandedInstance: true,
       label: t('SIDEBAR_ITEMS.SUPER_ADMIN_CONSOLE'),
@@ -109,6 +117,7 @@ const menuItems = computed(() => {
       target: '_blank',
     },
     {
+      name: 'Logout',
       show: true,
       showOnCustomBrandedInstance: true,
       label: t('SIDEBAR_ITEMS.LOGOUT'),
@@ -119,7 +128,12 @@ const menuItems = computed(() => {
 });
 
 const allowedMenuItems = computed(() => {
-  return menuItems.value.filter(item => item.show);
+  const disabled = disabledSidebarItems.value || [];
+  return menuItems.value.filter(item => {
+    if (!item.show) return false;
+    if (item.name && disabled.includes(item.name.toLowerCase())) return false;
+    return true;
+  });
 });
 </script>
 

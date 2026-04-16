@@ -45,6 +45,7 @@ const { t } = useI18n();
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
 );
+const disabledSidebarItems = useMapGetter('globalConfig/disabledSidebarItems');
 const isRTL = useMapGetter('accounts/isRTL');
 
 const { width: windowWidth } = useWindowSize();
@@ -208,7 +209,12 @@ const newReportRoutes = () => [
 
 const reportRoutes = computed(() => newReportRoutes());
 
-const menuItems = computed(() => {
+const isItemDisabled = itemName => {
+  const disabled = disabledSidebarItems.value || [];
+  return disabled.includes(itemName.toLowerCase());
+};
+
+const allMenuItems = computed(() => {
   return [
     {
       name: 'Inbox',
@@ -672,6 +678,22 @@ const menuItems = computed(() => {
       ],
     },
   ];
+});
+
+const menuItems = computed(() => {
+  const disabled = disabledSidebarItems.value || [];
+  if (!disabled.length) return allMenuItems.value;
+
+  return allMenuItems.value
+    .filter(item => !isItemDisabled(item.name))
+    .map(item => {
+      if (!item.children) return item;
+      return {
+        ...item,
+        children: item.children.filter(child => !isItemDisabled(child.name)),
+      };
+    })
+    .filter(item => !item.children || item.children.length > 0);
 });
 </script>
 

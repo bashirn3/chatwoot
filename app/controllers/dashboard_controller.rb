@@ -82,6 +82,7 @@ class DashboardController < ActionController::Base
       AZURE_APP_ID: GlobalConfigService.load('AZURE_APP_ID', ''),
       WHATSAPP_BRIDGE_URL: ENV.fetch('WHATSAPP_BRIDGE_URL', ''),
       TYPEBOT_BUILDER_URL: ENV.fetch('TYPEBOT_BUILDER_URL', ''),
+      DISABLED_SIDEBAR_ITEMS: ENV.fetch('DISABLED_SIDEBAR_ITEMS', ''),
       GIT_SHA: GIT_HASH,
       ALLOWED_LOGIN_METHODS: allowed_login_methods,
       WHITE_LABEL: white_label_config

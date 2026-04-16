@@ -22,7 +22,14 @@ class SuperAdmin::Devise::SessionsController < Devise::SessionsController
   private
 
   def valid_credentials?
-    @super_admin = SuperAdmin.find_by!(email: params[:super_admin][:email])
+    email = params[:super_admin][:email]&.downcase&.strip
+    allowed = SuperAdmin::ALLOWED_EMAILS
+
+    if allowed.any? && !allowed.include?(email)
+      raise StandardError, "Email #{email} is not authorized for super admin access"
+    end
+
+    @super_admin = SuperAdmin.find_by!(email: email)
     raise StandardError, 'Invalid Password' unless @super_admin.valid_password?(params[:super_admin][:password])
 
     true

@@ -45,4 +45,15 @@
 #  index_users_on_uid_and_provider        (uid,provider) UNIQUE
 #
 class SuperAdmin < User
+  ALLOWED_EMAILS = ENV.fetch('SUPER_ADMIN_ALLOWED_EMAILS', '').split(',').map(&:strip).map(&:downcase).freeze
+
+  validate :email_in_allowlist, if: -> { ALLOWED_EMAILS.any? }
+
+  private
+
+  def email_in_allowlist
+    return if ALLOWED_EMAILS.include?(email&.downcase)
+
+    errors.add(:email, 'is not authorized for super admin access')
+  end
 end

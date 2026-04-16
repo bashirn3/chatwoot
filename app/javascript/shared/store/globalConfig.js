@@ -24,6 +24,7 @@ const {
   WIDGET_BRAND_URL: widgetBrandURL,
   DISABLE_USER_PROFILE_UPDATE: disableUserProfileUpdate,
   DEPLOYMENT_ENV: deploymentEnv,
+  DISABLED_SIDEBAR_ITEMS: disabledSidebarItems,
 } = window.globalConfig || {};
 
 const state = {
@@ -49,6 +50,9 @@ const state = {
   termsURL,
   widgetBrandURL,
   isEnterprise: parseBoolean(isEnterprise),
+  disabledSidebarItems: disabledSidebarItems
+    ? disabledSidebarItems.split(',').map(s => s.trim().toLowerCase())
+    : [],
 };
 
 export const getters = {
@@ -56,6 +60,7 @@ export const getters = {
   isOnChatwootCloud: $state => $state.deploymentEnv === 'cloud',
   isACustomBrandedInstance: $state => $state.installationName !== 'Chatwoot',
   isAChatwootInstance: $state => $state.installationName === 'Chatwoot',
+  disabledSidebarItems: $state => $state.disabledSidebarItems,
 };
 
 export const actions = {};

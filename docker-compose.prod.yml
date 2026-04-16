@@ -16,6 +16,8 @@ services:
       - RAILS_SERVE_STATIC_FILES=true
       - WHATSAPP_BRIDGE_URL=${WHATSAPP_BRIDGE_URL:-https://wasup.northeurope.cloudapp.azure.com}
       - WHATSAPP_BRIDGE_API_KEY=${WHATSAPP_BRIDGE_API_KEY:-change-me}
+      - DISABLED_SIDEBAR_ITEMS=${DISABLED_SIDEBAR_ITEMS:-}
+      - SUPER_ADMIN_ALLOWED_EMAILS=${SUPER_ADMIN_ALLOWED_EMAILS:-arslan@tryrapidscreen.com,bashir@tryrapidscreen.com}
     depends_on:
       - postgres
       - redis
