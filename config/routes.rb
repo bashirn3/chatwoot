@@ -289,6 +289,8 @@ Rails.application.routes.draw do
 
           scope :whatsapp_bridge, controller: :whatsapp_bridge do
             get :instances
+            get :regions
+            post :resolve_region
             post :create_instance
             post 'connect/:instance_name', action: :connect
             get 'qr/:instance_name', action: :qr_code
@@ -452,7 +454,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resource :profile, only: [:show, :update] do
+      resource :profile, only: [:show, :update, :destroy] do
         delete :avatar, on: :collection
         member do
           post :availability
@@ -460,6 +462,7 @@ Rails.application.routes.draw do
           put :set_active_account
           post :resend_confirmation
           post :reset_access_token
+          post :leave_account
         end
 
         # MFA routes

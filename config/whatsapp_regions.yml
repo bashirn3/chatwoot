@@ -1,0 +1,96 @@
+# WhatsApp bridge — multi-region fleet registry.
+#
+# This file is COMMITTED and contains NO secrets. All URLs and API keys come
+# from env vars (see .env.example). Regions whose env vars are unset at boot
+# are silently skipped from the active set — so rolling out regions is just
+# a matter of adding env vars and restarting the app.
+#
+# Shape of each entry:
+#   url       (string, from env)  — base URL of the regional framework
+#   api_key   (string, from env)  — X-API-Key header for the regional framework
+#   country   (string, ISO-3166-1 alpha-2) — country this region primarily serves
+#   label     (string)            — display name shown in the UI
+#   lat/lng   (float)             — datacentre coordinates for the country map
+#   active    (bool)              — offered as a choice in the picker
+#   legacy    (bool, optional)    — hidden from UI but kept routable for old instances
+#
+# Ordering in this file has no functional meaning.
+
+legacy:
+  url: <%= ENV.fetch('WHATSAPP_BRIDGE_URL', nil) %>
+  api_key: <%= ENV.fetch('WHATSAPP_BRIDGE_API_KEY', nil) %>
+  active: false
+  legacy: true
+  label: Legacy single-region
+
+de:
+  url: <%= ENV.fetch('DE_URL', nil) %>
+  api_key: <%= ENV.fetch('DE_API_KEY', nil) %>
+  country: DE
+  label: Germany
+  lat: 50.1109
+  lng: 8.6821
+  active: true
+
+fr:
+  url: <%= ENV.fetch('FR_URL', nil) %>
+  api_key: <%= ENV.fetch('FR_API_KEY', nil) %>
+  country: FR
+  label: France
+  lat: 48.8566
+  lng: 2.3522
+  active: true
+
+it:
+  url: <%= ENV.fetch('IT_URL', nil) %>
+  api_key: <%= ENV.fetch('IT_API_KEY', nil) %>
+  country: IT
+  label: Italy
+  lat: 45.4642
+  lng: 9.1900
+  active: true
+
+fi:
+  url: <%= ENV.fetch('FI_URL', nil) %>
+  api_key: <%= ENV.fetch('FI_API_KEY', nil) %>
+  country: FI
+  label: Finland
+  lat: 60.1699
+  lng: 24.9384
+  active: true
+
+se:
+  url: <%= ENV.fetch('SE_URL', nil) %>
+  api_key: <%= ENV.fetch('SE_API_KEY', nil) %>
+  country: SE
+  label: Sweden
+  lat: 59.3293
+  lng: 18.0686
+  active: true
+
+"no":
+  url: <%= ENV.fetch('NO_URL', nil) %>
+  api_key: <%= ENV.fetch('NO_API_KEY', nil) %>
+  country: "NO"
+  label: Norway
+  lat: 59.9139
+  lng: 10.7522
+  active: true
+
+uk-south:
+  url: <%= ENV.fetch('UK_SOUTH_URL', nil) %>
+  api_key: <%= ENV.fetch('UK_SOUTH_API_KEY', nil) %>
+  country: GB
+  label: United Kingdom (London)
+  lat: 51.5074
+  lng: -0.1278
+  active: true
+
+uk-west:
+  url: <%= ENV.fetch('UK_WEST_URL', nil) %>
+  api_key: <%= ENV.fetch('UK_WEST_API_KEY', nil) %>
+  country: GB
+  label: United Kingdom (Cardiff)
+  lat: 51.4816
+  lng: -3.1791
+  active: true

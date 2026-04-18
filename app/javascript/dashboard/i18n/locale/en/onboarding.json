@@ -1,0 +1,87 @@
+{
+  "ONBOARDING": {
+    "SKIP": "Skip",
+    "COUNTRY_PICKER": {
+      "EYEBROW": "Where should we host your",
+      "TITLE": "WhatsApp number",
+      "SUBTITLE": "Pick the country closest to your audience. We'll spin up a regional server with a residential IP for anti-ban stability.",
+      "CONTINUE": "Continue",
+      "BACK_TO_SIGNIN": "Back to dashboard",
+      "COVERED": "{count} countries covered",
+      "COMING_SOON": "Coming soon",
+      "TAB_ACTIVE": "Available",
+      "TAB_COMING": "Coming soon",
+      "INACTIVE_NOTICE": "{country} isn't live yet. Join the waitlist and we'll email you the moment we add it.",
+      "JOIN_WAITLIST": "Notify me",
+      "LOADING": "Preparing your regional server…",
+      "RESOLVE_FAILED": "Couldn't reach any server in that region. Try another country.",
+      "COUNTRY_NAMES": {
+        "DE": "Germany",
+        "FR": "France",
+        "IT": "Italy",
+        "FI": "Finland",
+        "SE": "Sweden",
+        "NO": "Norway",
+        "GB": "United Kingdom",
+        "NL": "Netherlands",
+        "IE": "Ireland",
+        "ES": "Spain",
+        "BE": "Belgium",
+        "CH": "Switzerland",
+        "AT": "Austria",
+        "DK": "Denmark",
+        "PL": "Poland"
+      }
+    },
+    "HOOKUP": {
+      "EYEBROW": "Start by connecting your",
+      "TITLE": "WhatsApp Business",
+      "SUBTITLE": "Download WhatsApp Business from the App or Play Store.",
+      "STEP_1": "On your phone",
+      "STEP_1_DESC": "Open Linked Devices",
+      "STEP_2": "Scan the code",
+      "STEP_2_DESC": "Point your camera here",
+      "IOS": "iOS",
+      "ANDROID": "Android",
+      "IOS_INSTRUCTIONS": "Open WhatsApp, go to Settings, tap Linked Devices, then Link a Device.",
+      "ANDROID_INSTRUCTIONS": "Open WhatsApp, tap the menu, choose Linked Devices, then Link a Device.",
+      "PREVIOUS": "Previous",
+      "CONTINUE": "Continue",
+      "WAITING": "Waiting for scan",
+      "CONNECTED": "Connected",
+      "QR_LOADING": "Preparing your QR",
+      "QR_ERROR": "Couldn't prepare your WhatsApp connection. You can continue and set it up later.",
+      "METHOD_QR": "QR code",
+      "METHOD_PHONE": "Phone number",
+      "SWAP_TO_PHONE": "Link with phone number instead",
+      "SWAP_TO_QR": "Link with QR code instead",
+      "PLAY_VIDEO": "Play video",
+      "PHONE_LABEL": "Your WhatsApp number",
+      "PHONE_PLACEHOLDER": "7835 156 367",
+      "GET_CODE": "Get pairing code",
+      "PAIRING_CODE_LABEL": "Your pairing code",
+      "PAIRING_CODE_HINT": "Enter this code on your phone to link.",
+      "USE_DIFFERENT_NUMBER": "Use a different number",
+      "STEP_LABEL": "Step {current} of {total}",
+      "BACK": "Back",
+      "NEXT": "Next",
+      "ANDROID_STEPS": {
+        "1": "Open WhatsApp on your primary Android phone.",
+        "2": "Tap More (three vertical dots) > Linked devices > Link a device > Link with phone number instead.",
+        "3": "Enter the eight-character code from your companion device on your primary phone."
+      },
+      "IOS_STEPS": {
+        "1": "Open WhatsApp on your primary iPhone.",
+        "2": "Go to the Settings tab, then tap Linked devices > Link device > Link with phone number instead.",
+        "3": "If prompted, verify your identity.",
+        "4": "Follow the on-screen instructions to verify with biometrics, or enter your phone's unlock PIN.",
+        "5": "Enter the eight-character code from your companion device on your primary phone."
+      }
+    },
+    "ALL_SET": {
+      "TITLE": "All Set, {name}",
+      "WELCOME": "Welcome to {brandName}",
+      "CTA": "Go to Dashboard"
+    }
+  }
+}

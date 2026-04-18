@@ -73,3 +73,11 @@ remove_orphan_conversations_job:
   cron: '0 */12 * * *'
   class: 'Internal::RemoveOrphanConversationsJob'
   queue: housekeeping
+
+# Every 3 minutes: sync Baileys-backed WhatsApp channels' connection state
+# from the framework and email admins + inbox members when a connection
+# drops (see WhatsappBridge::SyncConnectionStateService).
+whatsapp_bridge_sync_connection_states_job:
+  cron: '*/3 * * * *'
+  class: 'WhatsappBridge::SyncConnectionStatesJob'
+  queue: scheduled_jobs

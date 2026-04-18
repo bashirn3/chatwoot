@@ -19,6 +19,24 @@ class AdministratorNotifications::ChannelNotificationsMailer < AdministratorNoti
     send_notification(subject, action_url: inbox_url(inbox))
   end
 
+  # Triggered by the WhatsApp bridge state-sync job when a Baileys-backed
+  # instance transitions from connected → disconnected. Notifies account
+  # administrators AND anyone assigned to the specific inbox so whoever
+  # owns the channel day-to-day is looped in.
+  def whatsapp_bridge_disconnect(inbox, status = nil)
+    recipients = whatsapp_bridge_recipients(inbox)
+    return if recipients.blank?
+
+    reason = status.present? ? " (state: #{status})" : ''
+    subject = "WhatsApp connection lost for #{inbox.name}#{reason} — re-link required"
+    send_notification(
+      subject,
+      to: recipients,
+      action_url: inbox_url(inbox),
+      meta: { inbox_name: inbox.name, status: status.to_s }
+    )
+  end
+
   def email_disconnect(inbox)
     subject = 'Your email inbox has been disconnected. Please update the credentials for SMTP/IMAP'
     send_notification(subject, action_url: inbox_url(inbox))
@@ -74,6 +92,15 @@ class AdministratorNotifications::ChannelNotificationsMailer < AdministratorNoti
   end
 
   private
+
+  # Admins of the account + members explicitly assigned to the inbox.
+  # Deduplicated, nil/empty-email-safe.
+  def whatsapp_bridge_recipients(inbox)
+    account = inbox.account
+    admin_emails = account.administrators.pluck(:email)
+    member_emails = inbox.members.pluck(:email)
+    (admin_emails + member_emails).compact_blank.uniq
+  end
 
   def build_account_status_subject(event)
     case event.event_type

@@ -10,9 +10,21 @@ class WhatsAppBridgeAPI extends ApiClient {
     return `/api/v1/whatsapp_bridge/accounts/${this.accountIdFromRoute}`;
   }
 
-  createInstance(instanceName) {
+  createInstance(instanceName, { countryIso = null, regionCode = null } = {}) {
     return axios.post(`${this.url}/create_instance`, {
       instance_name: instanceName,
+      country_iso: countryIso,
+      region_code: regionCode,
+    });
+  }
+
+  getRegions() {
+    return axios.get(`${this.url}/regions`);
+  }
+
+  resolveRegion(countryIso) {
+    return axios.post(`${this.url}/resolve_region`, {
+      country_iso: countryIso,
     });
   }
 
