@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { removeEmoji } from 'shared/helpers/emoji';
+import { useStore } from 'vuex';
 
 import Icon from 'dashboard/components-next/icon/Icon.vue';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon.vue';
@@ -46,11 +47,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  avatarStyle: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['upload', 'delete']);
 
 const { t } = useI18n();
+const store = useStore();
+const globalAvatarStyle = computed(
+  () => store?.getters?.getUISettings?.avatar_style || ''
+);
 
 const isImageValid = ref(true);
 const fileInput = ref(null);
@@ -80,6 +89,18 @@ const STATUS_CLASSES = computed(() => ({
   busy: 'bg-n-amber-10',
   ...(props.hideOfflineStatus ? {} : { offline: 'bg-n-slate-10' }),
 }));
+
+const dicebearUrl = computed(() => {
+  if (!props.name) return '';
+  // Use dicebear when no src is provided, OR when the provided src failed
+  // to load (falls through from the <img> error handler). This ensures
+  // users without an uploaded avatar still get a coloured illustration
+  // rather than plain initials.
+  if (props.src && isImageValid.value) return '';
+  const style = props.avatarStyle || globalAvatarStyle.value || 'adventurer';
+  const seed = encodeURIComponent(props.name);
+  return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&radius=50`;
+});
 
 const showDefaultAvatar = computed(() => !props.src && !props.name);
 
@@ -233,6 +254,13 @@ watch(
         :src="src"
         :alt="name"
         @error="invalidateCurrentImage"
+      />
+
+      <img
+        v-else-if="dicebearUrl"
+        :src="dicebearUrl"
+        :alt="name"
+        class="w-full h-full object-cover"
       />
 
       <template v-else>

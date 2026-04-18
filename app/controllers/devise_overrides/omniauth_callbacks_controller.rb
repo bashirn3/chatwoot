@@ -73,13 +73,26 @@ class DeviseOverrides::OmniauthCallbacksController < DeviseTokenAuth::OmniauthCa
 
   def create_account_for_user
     @resource, @account = AccountBuilder.new(
-      account_name: extract_domain_without_tld(auth_hash['info']['email']),
+      account_name: default_account_name_for_signup,
       user_full_name: auth_hash['info']['name'],
       email: auth_hash['info']['email'],
       locale: I18n.locale,
       confirmed: auth_hash['info']['email_verified']
     ).perform
     Avatar::AvatarFromUrlJob.perform_later(@resource, auth_hash['info']['image'])
+  end
+
+  # Prefer "<FirstName>'s organisation" so the first account a user sees
+  # is named after them (e.g. "Jake's organisation"), not after their email
+  # domain ("gmail"). Falls back to the legacy domain-based name if we
+  # cannot derive a name from the OAuth payload.
+  def default_account_name_for_signup
+    full_name = auth_hash.dig('info', 'name').to_s.strip
+    first_name = auth_hash.dig('info', 'first_name').to_s.strip
+    first = first_name.presence || full_name.split(/\s+/).first
+    return "#{first}'s organisation" if first.present?
+
+    extract_domain_without_tld(auth_hash['info']['email'])
   end
 
   def default_devise_mapping

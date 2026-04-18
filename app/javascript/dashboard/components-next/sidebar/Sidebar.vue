@@ -6,6 +6,7 @@ import { useKbd } from 'dashboard/composables/utils/useKbd';
 import { useMapGetter } from 'dashboard/composables/store';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { useSidebarKeyboardShortcuts } from './useSidebarKeyboardShortcuts';
 import { vOnClickOutside } from '@vueuse/components';
 import { useWindowSize, useEventListener } from '@vueuse/core';
@@ -20,7 +21,6 @@ import SidebarChangelogButton from './SidebarChangelogButton.vue';
 import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
-import Logo from 'next/icon/Logo.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 
 const props = defineProps({
@@ -39,13 +39,28 @@ const emit = defineEmits([
 
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();
+const route = useRoute();
 const searchShortcut = useKbd([`$mod`, 'k']);
 const { t } = useI18n();
+
+const captainAssistantId = computed(() => route.params.assistantId || '');
+const captainRoute = navPath =>
+  captainAssistantId.value
+    ? accountScopedRoute(navPath, {
+        assistantId: captainAssistantId.value,
+      })
+    : accountScopedRoute('captain_assistants_index', {
+        navigationPath: navPath,
+      });
 
 const isACustomBrandedInstance = useMapGetter(
   'globalConfig/isACustomBrandedInstance'
 );
 const disabledSidebarItems = useMapGetter('globalConfig/disabledSidebarItems');
+const globalConfig = useMapGetter('globalConfig/get');
+const brandName = computed(
+  () => globalConfig.value?.installationName || 'wasup.co'
+);
 const isRTL = useMapGetter('accounts/isRTL');
 
 const { width: windowWidth } = useWindowSize();
@@ -248,6 +263,9 @@ const allMenuItems = computed(() => {
           activeOn: ['conversation_through_unattended'],
           label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
           to: accountScopedRoute('conversation_unattended'),
+          getterKeys: {
+            count: 'conversationStats/getUnassignedCount',
+          },
         },
         {
           name: 'Folders',
@@ -312,33 +330,70 @@ const allMenuItems = computed(() => {
       name: 'AI',
       icon: 'i-lucide-sparkles',
       label: t('SIDEBAR.AI'),
-      activeAccent: '#ff5924',
       children: [
         {
           name: 'Captain',
           label: t('SIDEBAR.CAPTAIN'),
           icon: 'i-woot-captain',
-          activeOn: [
-            'captain_assistants_create_index',
-            'captain_assistants_responses_index',
-            'captain_assistants_responses_pending',
-            'captain_assistants_documents_index',
-            'captain_assistants_scenarios_index',
-            'captain_assistants_playground_index',
-            'captain_assistants_inboxes_index',
-            'captain_tools_index',
-            'captain_assistants_settings_index',
-            'captain_assistants_guidelines_index',
-            'captain_assistants_guardrails_index',
+          children: [
+            {
+              name: 'Captain FAQs',
+              label: t('CAPTAIN.RESPONSES.HEADER'),
+              activeAccent: '#2596be',
+              activeOn: [
+                'captain_assistants_responses_index',
+                'captain_assistants_responses_pending',
+                'captain_assistants_create_index',
+              ],
+              to: captainRoute('captain_assistants_responses_index'),
+            },
+            {
+              name: 'Captain Documents',
+              label: t('CAPTAIN.DOCUMENTS.HEADER'),
+              activeAccent: '#2596be',
+              activeOn: ['captain_assistants_documents_index'],
+              to: captainRoute('captain_assistants_documents_index'),
+            },
+            {
+              name: 'Captain Scenarios',
+              label: t('CAPTAIN.ASSISTANTS.SCENARIOS.TITLE'),
+              activeAccent: '#2596be',
+              activeOn: ['captain_assistants_scenarios_index'],
+              to: captainRoute('captain_assistants_scenarios_index'),
+            },
+            {
+              name: 'Captain Playground',
+              label: t('CAPTAIN.PLAYGROUND.HEADER'),
+              activeAccent: '#2596be',
+              activeOn: ['captain_assistants_playground_index'],
+              to: captainRoute('captain_assistants_playground_index'),
+            },
+            {
+              name: 'Captain Inboxes',
+              label: t('CAPTAIN.INBOXES.HEADER'),
+              activeAccent: '#2596be',
+              activeOn: ['captain_assistants_inboxes_index'],
+              to: captainRoute('captain_assistants_inboxes_index'),
+            },
+            {
+              name: 'Captain Settings',
+              label: t('SIDEBAR.ACCOUNT_SETTINGS'),
+              activeAccent: '#2596be',
+              activeOn: [
+                'captain_assistants_settings_index',
+                'captain_assistants_guidelines_index',
+                'captain_assistants_guardrails_index',
+              ],
+              to: captainRoute('captain_assistants_settings_index'),
+            },
           ],
-          to: accountScopedRoute('captain_assistants_index', {
-            navigationPath: 'captain_assistants_responses_index',
-          }),
         },
         {
           name: 'Workflows',
           label: t('SIDEBAR.WORKFLOWS'),
           icon: 'i-lucide-workflow',
+          flat: true,
+          activeAccent: '#ff5924',
           activeOn: ['settings_bots'],
           to: accountScopedRoute('settings_bots'),
         },
@@ -408,6 +463,23 @@ const allMenuItems = computed(() => {
       ],
     },
     {
+      name: 'Companies',
+      label: t('SIDEBAR.COMPANIES'),
+      icon: 'i-lucide-building-2',
+      children: [
+        {
+          name: 'All Companies',
+          label: t('SIDEBAR.ALL_COMPANIES'),
+          to: accountScopedRoute(
+            'companies_dashboard_index',
+            {},
+            { page: 1, search: undefined }
+          ),
+          activeOn: ['companies_dashboard_index'],
+        },
+      ],
+    },
+    {
       name: 'Reports',
       label: t('SIDEBAR.REPORTS'),
       icon: 'i-lucide-chart-spline',
@@ -432,6 +504,80 @@ const allMenuItems = computed(() => {
           name: 'Reports SLA',
           label: t('SIDEBAR.REPORTS_SLA'),
           to: accountScopedRoute('sla_reports'),
+        },
+      ],
+    },
+    {
+      name: 'Campaigns',
+      label: t('SIDEBAR.CAMPAIGNS'),
+      icon: 'i-lucide-megaphone',
+      children: [
+        {
+          name: 'Live chat',
+          label: t('SIDEBAR.LIVE_CHAT'),
+          to: accountScopedRoute('campaigns_livechat_index'),
+        },
+        {
+          name: 'SMS',
+          label: t('SIDEBAR.SMS'),
+          to: accountScopedRoute('campaigns_sms_index'),
+        },
+        {
+          name: 'WhatsApp',
+          label: t('SIDEBAR.WHATSAPP'),
+          to: accountScopedRoute('campaigns_whatsapp_index'),
+        },
+        {
+          name: 'Launcher',
+          label: t('SIDEBAR.CAMPAIGN_LAUNCHER'),
+          to: accountScopedRoute('campaign_launcher'),
+        },
+      ],
+    },
+    {
+      name: 'Portals',
+      label: t('SIDEBAR.HELP_CENTER.TITLE'),
+      icon: 'i-lucide-library-big',
+      children: [
+        {
+          name: 'Articles',
+          label: t('SIDEBAR.HELP_CENTER.ARTICLES'),
+          activeOn: [
+            'portals_articles_index',
+            'portals_articles_new',
+            'portals_articles_edit',
+          ],
+          to: accountScopedRoute('portals_index', {
+            navigationPath: 'portals_articles_index',
+          }),
+        },
+        {
+          name: 'Categories',
+          label: t('SIDEBAR.HELP_CENTER.CATEGORIES'),
+          activeOn: [
+            'portals_categories_index',
+            'portals_categories_articles_index',
+            'portals_categories_articles_edit',
+          ],
+          to: accountScopedRoute('portals_index', {
+            navigationPath: 'portals_categories_index',
+          }),
+        },
+        {
+          name: 'Locales',
+          label: t('SIDEBAR.HELP_CENTER.LOCALES'),
+          activeOn: ['portals_locales_index'],
+          to: accountScopedRoute('portals_index', {
+            navigationPath: 'portals_locales_index',
+          }),
+        },
+        {
+          name: 'Settings',
+          label: t('SIDEBAR.HELP_CENTER.SETTINGS'),
+          activeOn: ['portals_settings_index'],
+          to: accountScopedRoute('portals_index', {
+            navigationPath: 'portals_settings_index',
+          }),
         },
       ],
     },
@@ -569,7 +715,11 @@ const menuItems = computed(() => {
           />
         </template>
         <template v-else>
-          <span class="text-[15px] font-semibold tracking-tight text-n-slate-12 flex-shrink-0 select-none pl-1">wasup.co</span>
+          <span
+            class="text-[15px] font-semibold tracking-tight text-n-slate-12 flex-shrink-0 select-none pl-1"
+          >
+            {{ brandName }}
+          </span>
         </template>
       </div>
       <div

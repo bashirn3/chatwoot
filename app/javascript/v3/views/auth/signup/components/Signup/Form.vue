@@ -12,6 +12,7 @@ import NextButton from 'dashboard/components-next/button/Button.vue';
 import PasswordRequirements from './PasswordRequirements.vue';
 import { isValidPassword } from 'shared/helpers/Validators';
 import GoogleOAuthButton from '../../../../../components/GoogleOauth/Button.vue';
+import SimpleDivider from '../../../../../components/Divider/SimpleDivider.vue';
 import { register } from '../../../../../api/auth';
 import * as CompanyEmailValidator from 'company-email-validator';
 
@@ -115,6 +116,10 @@ const onCaptchaError = () => {
 
 <template>
   <div class="flex-1">
+    <div v-if="showGoogleOAuth" class="flex flex-col gap-4 mb-5">
+      <GoogleOAuthButton :label="$t('REGISTER.OAUTH.GOOGLE_SIGNUP')" />
+      <SimpleDivider :label="$t('COMMON.OR')" class="uppercase" />
+    </div>
     <form class="space-y-3" @submit.prevent="submit">
       <FormInput
         v-model="credentials.email"
@@ -177,9 +182,6 @@ const onCaptchaError = () => {
         :is-loading="isSignupInProgress"
       />
     </form>
-    <GoogleOAuthButton v-if="showGoogleOAuth" class="mt-3">
-      {{ $t('REGISTER.OAUTH.GOOGLE_SIGNUP') }}
-    </GoogleOAuthButton>
     <p
       class="text-sm mt-5 mb-0 text-n-slate-11 [&>a]:text-n-blue-10 [&>a]:font-medium [&>a]:hover:text-n-blue-11"
       v-html="termsLink"

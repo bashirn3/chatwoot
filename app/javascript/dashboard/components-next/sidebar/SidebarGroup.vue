@@ -236,7 +236,8 @@ watch(
           type="button"
           class="flex items-center justify-center size-10 rounded-lg"
           :class="{
-            'text-n-slate-12 bg-n-slate-3 dark:bg-n-slate-3/50': isActive || hasActiveChild,
+            'text-n-slate-12 bg-n-slate-3 dark:bg-n-slate-3/50':
+              isActive || hasActiveChild,
             'text-n-slate-11 hover:bg-n-alpha-2': !isActive && !hasActiveChild,
           }"
           :title="label"
@@ -285,6 +286,32 @@ watch(
             :is-expanded="isExpanded"
             :active-child="activeChild"
           />
+          <li
+            v-else-if="child.flat && isAllowed(child.to)"
+            v-show="isExpanded || activeChild?.name === child.name"
+            class="my-1"
+          >
+            <router-link
+              :to="child.to"
+              :title="child.label"
+              class="flex items-center gap-2 px-2 py-1.5 rounded-lg h-8 min-w-0 transition-[background-color,color,border-color] duration-150 ease-out"
+              :class="
+                activeChild?.name === child.name
+                  ? 'text-n-slate-12 bg-n-slate-3 dark:bg-n-slate-3/50 font-medium'
+                  : 'text-n-slate-10 hover:bg-n-alpha-2'
+              "
+              :style="
+                activeChild?.name === child.name && child.activeAccent
+                  ? { color: child.activeAccent }
+                  : {}
+              "
+            >
+              <Icon v-if="child.icon" :icon="child.icon" class="size-4" />
+              <span class="text-sm font-medium leading-5 flex-grow truncate">
+                {{ child.label }}
+              </span>
+            </router-link>
+          </li>
           <SidebarGroupLeaf
             v-else-if="isAllowed(child.to)"
             v-show="isExpanded || activeChild?.name === child.name"

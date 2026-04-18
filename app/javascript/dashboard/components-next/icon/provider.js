@@ -38,6 +38,14 @@ export function useChannelIcon(inbox) {
       icon = 'i-woot-whatsapp';
     }
 
+    // Baileys-backed Channel::Api inboxes are WhatsApp under the hood.
+    if (
+      type === 'Channel::Api' &&
+      inboxDetails.additional_attributes?.whatsapp_bridge_instance_id
+    ) {
+      icon = 'i-woot-whatsapp';
+    }
+
     return icon ?? 'i-ri-global-fill';
   });
 

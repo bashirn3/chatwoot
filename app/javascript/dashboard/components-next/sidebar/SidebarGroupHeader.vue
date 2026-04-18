@@ -23,7 +23,10 @@ const activeClasses = computed(() => {
 
 const activeStyle = computed(() => {
   if (props.isActive && !props.hasActiveChild && props.activeAccent) {
-    return { borderColor: props.activeAccent };
+    return {
+      borderColor: props.activeAccent,
+      color: props.activeAccent,
+    };
   }
   return {};
 });
