@@ -15,10 +15,21 @@ class Llm::BaseAiService
   end
 
   def chat(model: @model, temperature: @temperature)
-    RubyLLM.chat(model: model).with_temperature(temperature)
+    chat_args = { model: model }
+    if custom_endpoint?
+      chat_args[:provider] = :openai
+      chat_args[:assume_model_exists] = true
+    end
+    RubyLLM.chat(**chat_args).with_temperature(temperature)
   end
 
   private
+
+  def custom_endpoint?
+    endpoint = InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_ENDPOINT')&.value.presence ||
+               ENV.fetch('CAPTAIN_OPEN_AI_ENDPOINT', nil).presence
+    endpoint.present? && !endpoint.include?('api.openai.com')
+  end
 
   def setup_model
     config_value = InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_MODEL')&.value.presence ||

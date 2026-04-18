@@ -44,6 +44,7 @@ import whatsappAccountStatus from './whatsappAccountStatus.json';
 import contentTemplates from './contentTemplates.json';
 import mfa from './mfa.json';
 import yearInReview from './yearInReview.json';
+import onboarding from './onboarding.json';
 
 export default {
   ...advancedFilters,
@@ -92,4 +93,5 @@ export default {
   ...contentTemplates,
   ...mfa,
   ...yearInReview,
+  ...onboarding,
 };

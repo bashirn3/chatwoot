@@ -56,6 +56,8 @@ class Captain::BaseTaskService
   end
 
   def execute_ruby_llm_request(model:, messages:, tools: [])
+    return execute_direct_http_request(model: model, messages: messages) if custom_endpoint?
+
     Llm::Config.with_api_key(api_key, api_base: api_base) do |context|
       chat = build_chat(context, model: model, messages: messages, tools: tools)
 
@@ -68,6 +70,59 @@ class Captain::BaseTaskService
   rescue StandardError => e
     ChatwootExceptionTracker.new(e, account: account).capture_exception
     { error: e.message, request_messages: messages }
+  end
+
+  def custom_endpoint?
+    endpoint = InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_ENDPOINT')&.value.presence ||
+               ENV.fetch('CAPTAIN_OPEN_AI_ENDPOINT', nil).presence
+    endpoint.present? && !endpoint.include?('api.openai.com')
+  end
+
+  def execute_direct_http_request(model:, messages:)
+    system_msg = messages.find { |m| m[:role] == 'system' }
+    conversation_messages = messages.reject { |m| m[:role] == 'system' }
+    return { error: 'No conversation messages provided', error_code: 400, request_messages: messages } if conversation_messages.empty?
+
+    input = conversation_messages.map { |m| { role: m[:role], content: m[:content] } }
+    payload = { model: model, input: input }
+    payload[:instructions] = system_msg[:content] if system_msg
+
+    response = HTTParty.post(
+      "#{api_base}/chat/completions",
+      headers: { 'Authorization' => "Bearer #{api_key}", 'Content-Type' => 'application/json' },
+      body: payload.to_json,
+      timeout: 60
+    )
+
+    data = response.parsed_response
+    return { error: data.dig('error', 'message') || 'LLM request failed', request_messages: messages } if data['error']
+
+    content = extract_response_content(data)
+    { message: content, usage: extract_usage(data), request_messages: messages }
+  rescue StandardError => e
+    ChatwootExceptionTracker.new(e, account: account).capture_exception
+    { error: e.message, request_messages: messages }
+  end
+
+  def extract_response_content(data)
+    if data['choices']
+      data.dig('choices', 0, 'message', 'content')
+    elsif data['output']
+      msg = data['output']&.find { |o| o['type'] == 'message' }
+      msg&.dig('content', 0, 'text') || msg&.dig('content')
+    else
+      data.dig('message', 'content')
+    end
+  end
+
+  def extract_usage(data)
+    usage = data['usage'] || {}
+    {
+      'prompt_tokens' => usage['input_tokens'] || usage['prompt_tokens'] || 0,
+      'completion_tokens' => usage['output_tokens'] || usage['completion_tokens'] || 0,
+      'total_tokens' => (usage['input_tokens'] || usage['prompt_tokens'] || 0) +
+                        (usage['output_tokens'] || usage['completion_tokens'] || 0)
+    }
   end
 
   def build_chat(context, model:, messages:, tools: [])

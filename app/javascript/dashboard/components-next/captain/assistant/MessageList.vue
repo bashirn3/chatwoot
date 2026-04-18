@@ -51,7 +51,7 @@ watch(() => props.messages.length, scrollToBottom);
 <template>
   <div
     ref="messageContainer"
-    class="flex-1 overflow-y-auto mb-4 px-6 space-y-6"
+    class="min-h-0 overflow-y-auto px-5 py-5 space-y-4"
   >
     <div
       v-for="(message, index) in messages"
@@ -60,7 +60,7 @@ watch(() => props.messages.length, scrollToBottom);
       :class="getMessageAlignment(message.sender)"
     >
       <div
-        class="flex items-end gap-1.5 max-w-[90%] md:max-w-[60%]"
+        class="flex items-end gap-2 max-w-[90%] md:max-w-[75%]"
         :class="getMessageDirection(message.sender)"
       >
         <Avatar
@@ -70,7 +70,7 @@ watch(() => props.messages.length, scrollToBottom);
           class="shrink-0"
         />
         <div
-          class="px-4 py-3 text-sm [overflow-wrap:break-word]"
+          class="px-3.5 py-2.5 text-sm leading-relaxed [overflow-wrap:break-word]"
           :class="getMessageStyle(message.sender)"
         >
           <div v-html="formatMessage(message.content)" />
@@ -78,18 +78,18 @@ watch(() => props.messages.length, scrollToBottom);
       </div>
     </div>
     <div v-if="isLoading" class="flex justify-start">
-      <div class="flex items-start gap-1.5">
+      <div class="flex items-end gap-2">
         <Avatar :name="getAvatarName('assistant')" rounded-full :size="24" />
         <div
-          class="max-w-sm rounded-lg p-3 text-sm bg-n-solid-iris text-n-slate-12"
+          class="rounded-bl-sm rounded-br-xl rounded-t-xl px-3.5 py-2.5 bg-n-solid-iris text-n-slate-12"
         >
-          <div class="flex gap-1">
-            <div class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce" />
+          <div class="flex gap-1 items-center h-4">
+            <div class="size-1.5 rounded-full bg-n-iris-10 animate-bounce" />
             <div
-              class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.2s]"
+              class="size-1.5 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.15s]"
             />
             <div
-              class="w-2 h-2 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.4s]"
+              class="size-1.5 rounded-full bg-n-iris-10 animate-bounce [animation-delay:0.3s]"
             />
           </div>
         </div>

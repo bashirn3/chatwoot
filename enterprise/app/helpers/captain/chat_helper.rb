@@ -6,6 +6,8 @@ module Captain::ChatHelper
   def request_chat_completion
     log_chat_completion_request
 
+    return request_chat_completion_via_http if custom_endpoint?
+
     chat = build_chat
 
     add_messages_to_chat(chat)
@@ -19,6 +21,60 @@ module Captain::ChatHelper
   rescue StandardError => e
     Rails.logger.error "#{self.class.name} Assistant: #{@assistant.id}, Error in chat completion: #{e}"
     raise e
+  end
+
+  def request_chat_completion_via_http
+    with_agent_session do
+      system_msg = @messages.find { |m| m[:role].to_s == 'system' }
+      input = conversation_messages.map { |m| { role: m[:role].to_s, content: m[:content].to_s } }
+      payload = { model: @model, input: input }
+      payload[:instructions] = system_msg[:content] if system_msg
+
+      response = HTTParty.post(
+        "#{custom_endpoint_api_base}/chat/completions",
+        headers: { 'Authorization' => "Bearer #{custom_endpoint_api_key}", 'Content-Type' => 'application/json' },
+        body: payload.to_json,
+        timeout: 60
+      )
+      data = response.parsed_response
+      raise(data.dig('error', 'message') || 'LLM request failed') if data.is_a?(Hash) && data['error']
+
+      content = extract_response_content(data)
+      build_response(Struct.new(:content).new(content))
+    end
+  rescue StandardError => e
+    Rails.logger.error "#{self.class.name} Assistant: #{@assistant.id}, Error in chat completion: #{e}"
+    raise e
+  end
+
+  def custom_endpoint?
+    custom_endpoint_url.present? && !custom_endpoint_url.include?('api.openai.com')
+  end
+
+  def custom_endpoint_url
+    @custom_endpoint_url ||= InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_ENDPOINT')&.value.presence ||
+                             ENV.fetch('CAPTAIN_OPEN_AI_ENDPOINT', nil).presence
+  end
+
+  def custom_endpoint_api_base
+    "#{custom_endpoint_url.chomp('/')}/v1"
+  end
+
+  def custom_endpoint_api_key
+    InstallationConfig.find_by(name: 'CAPTAIN_OPEN_AI_API_KEY')&.value.presence || ENV.fetch('CAPTAIN_OPEN_AI_API_KEY', nil)
+  end
+
+  def extract_response_content(data)
+    return nil unless data.is_a?(Hash)
+
+    if data['choices']
+      data.dig('choices', 0, 'message', 'content')
+    elsif data['output']
+      msg = data['output']&.find { |o| o['type'] == 'message' }
+      msg&.dig('content', 0, 'text') || msg&.dig('content')
+    else
+      data.dig('message', 'content')
+    end
   end
 
   private

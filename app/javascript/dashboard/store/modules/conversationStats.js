@@ -10,6 +10,9 @@ const state = {
 
 export const getters = {
   getStats: $state => $state,
+  getUnassignedCount: $state => $state.unAssignedCount,
+  getAllCount: $state => $state.allCount,
+  getMineCount: $state => $state.mineCount,
 };
 
 // Create a debounced version of the actual API call function

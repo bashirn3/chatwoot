@@ -412,10 +412,20 @@
     "PLAYGROUND": {
       "USER": "You",
       "ASSISTANT": "Assistant",
-      "MESSAGE_PLACEHOLDER": "Type your message...",
+      "MESSAGE_PLACEHOLDER": "Message your assistant…",
+      "SEND": "Send message",
+      "RESET": "Reset conversation",
       "HEADER": "Playground",
       "DESCRIPTION": "Use this playground to send messages to your assistant and check if it responds accurately, quickly, and in the tone you expect.",
-      "CREDIT_NOTE": "Messages sent here will count toward your Captain credits."
+      "CREDIT_NOTE": "Messages sent here count toward your Captain credits.",
+      "EMPTY_TITLE": "Test drive your assistant",
+      "EMPTY_SUBTITLE": "Send a message to see how it responds. Nothing sent here is saved to a real conversation.",
+      "ERROR_MESSAGE": "Something went wrong. Please try again in a moment.",
+      "PROMPT_HINTS": {
+        "GREET": "Say hi and introduce yourself",
+        "CAPABILITIES": "What can you help me with?",
+        "ESCALATE": "I need to talk to a human agent"
+      }
     },
     "PAYWALL": {
       "TITLE": "Upgrade to use Captain AI",

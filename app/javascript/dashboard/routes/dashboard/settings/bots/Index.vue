@@ -1,12 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue';
+import { ref, computed, onMounted, defineAsyncComponent, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import TypebotsAPI from 'dashboard/api/typebots';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
-import ChannelSelector from 'dashboard/components/ChannelSelector.vue';
 
 const BaseSettingsHeader = defineAsyncComponent(
   () => import('../components/BaseSettingsHeader.vue')
@@ -18,60 +17,49 @@ const SettingsLayout = defineAsyncComponent(
 const { t } = useI18n();
 const store = useStore();
 
-const currentView = ref('list');
 const typebots = ref([]);
 const isLoading = ref(false);
 const isCreating = ref(false);
-const newBotName = ref('');
 const configError = ref(false);
+
+const createDialogRef = ref(null);
+const createInputRef = ref(null);
+const newBotName = ref('');
+
 const assignDialogRef = ref(null);
 const assignBotId = ref(null);
 const selectedInboxId = ref('');
 
-const webhookName = ref('');
-const webhookUrl = ref('');
+const deleteDialogRef = ref(null);
+const botPendingDelete = ref(null);
+const isDeleting = ref(false);
 
 const inboxes = computed(() => store.getters['inboxes/getInboxes'] || []);
+
+const builderBaseUrl = () =>
+  (window.chatwootConfig?.typebotBuilderUrl || '').replace(/\/$/, '');
+
+const getBotStatus = bot => (bot.publishedTypebotId ? 'published' : 'draft');
 
 async function fetchBots() {
   isLoading.value = true;
   try {
     const { data } = await TypebotsAPI.getAll();
     typebots.value = data.typebots || [];
-    if (data.error) {
-      useAlert(data.error);
-    }
+    if (data.error) useAlert(data.error);
   } catch (e) {
-    if (e?.response?.status === 503) {
-      configError.value = true;
-    }
+    if (e?.response?.status === 503) configError.value = true;
     const msg = e?.response?.data?.error;
-    if (msg) {
-      useAlert(msg);
-    }
+    if (msg) useAlert(msg);
   } finally {
     isLoading.value = false;
   }
 }
 
-function showSelector() {
-  currentView.value = 'selector';
-}
-
-function selectVisualBot() {
-  currentView.value = 'create-visual';
-}
-
-function selectWebhookBot() {
-  currentView.value = 'create-webhook';
-}
-
-function backToList() {
-  currentView.value = 'list';
-}
-
-function builderBaseUrl() {
-  return (window.chatwootConfig?.typebotBuilderUrl || '').replace(/\/$/, '');
+function openCreateDialog() {
+  newBotName.value = '';
+  createDialogRef.value?.open();
+  nextTick(() => createInputRef.value?.focus());
 }
 
 async function editBot(bot) {
@@ -89,69 +77,41 @@ async function editBot(bot) {
       authUrl || (base ? `${base}/typebots/${bot.id}/edit` : null);
     if (targetUrl) {
       const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        useAlert(t('BOTS.POPUP_BLOCKED'));
-      }
+      if (!opened) useAlert(t('BOTS.POPUP_BLOCKED'));
       return;
     }
   } catch (e) {
     const apiErr = e?.response?.data?.error;
-    if (apiErr) {
-      useAlert(apiErr);
-    }
+    if (apiErr) useAlert(apiErr);
   }
-  if (base) {
-    const opened = window.open(
-      `${base}/typebots/${bot.id}/edit`,
-      '_blank',
-      'noopener,noreferrer'
-    );
-    if (!opened) {
-      useAlert(t('BOTS.POPUP_BLOCKED'));
-    }
-  } else {
+  if (!base) {
     useAlert(t('BOTS.BUILDER_URL_MISSING'));
+    return;
   }
+  const opened = window.open(
+    `${base}/typebots/${bot.id}/edit`,
+    '_blank',
+    'noopener,noreferrer'
+  );
+  if (!opened) useAlert(t('BOTS.POPUP_BLOCKED'));
 }
 
 async function createBot() {
-  if (!newBotName.value.trim()) return;
+  const name = newBotName.value.trim();
+  if (!name || isCreating.value) return;
   isCreating.value = true;
   try {
-    const { data } = await TypebotsAPI.create(newBotName.value.trim());
+    const { data } = await TypebotsAPI.create(name);
     if (!data.typebot?.id) {
       useAlert(data.error || t('BOTS.CREATE_ERROR'));
       return;
     }
     useAlert(t('BOTS.CREATE_SUCCESS'));
-    const botId = data.typebot.id;
-    newBotName.value = '';
-    currentView.value = 'list';
+    createDialogRef.value?.close();
     await fetchBots();
-    await editBot({ id: botId });
+    await editBot({ id: data.typebot.id });
   } catch (e) {
-    const msg = e?.response?.data?.error;
-    useAlert(msg || t('BOTS.CREATE_ERROR'));
-  } finally {
-    isCreating.value = false;
-  }
-}
-
-async function createWebhookBot() {
-  if (!webhookName.value.trim() || !webhookUrl.value.trim()) return;
-  isCreating.value = true;
-  try {
-    await store.dispatch('agentBots/create', {
-      name: webhookName.value.trim(),
-      outgoing_url: webhookUrl.value.trim(),
-    });
-    useAlert(t('BOTS.CREATE_SUCCESS'));
-    webhookName.value = '';
-    webhookUrl.value = '';
-    currentView.value = 'list';
-    await fetchBots();
-  } catch {
-    useAlert(t('BOTS.CREATE_ERROR'));
+    useAlert(e?.response?.data?.error || t('BOTS.CREATE_ERROR'));
   } finally {
     isCreating.value = false;
   }
@@ -167,14 +127,25 @@ async function publishBot(bot) {
   }
 }
 
-async function deleteBot(bot) {
-  if (!window.confirm(t('BOTS.DELETE_CONFIRM'))) return;
+function confirmDelete(bot) {
+  botPendingDelete.value = bot;
+  deleteDialogRef.value?.open();
+}
+
+async function deleteBot() {
+  const bot = botPendingDelete.value;
+  if (!bot || isDeleting.value) return;
+  isDeleting.value = true;
   try {
     await TypebotsAPI.destroy(bot.id);
     useAlert(t('BOTS.DELETE_SUCCESS'));
+    deleteDialogRef.value?.close();
+    botPendingDelete.value = null;
     await fetchBots();
   } catch {
     useAlert(t('BOTS.DELETE_ERROR'));
+  } finally {
+    isDeleting.value = false;
   }
 }
 
@@ -196,10 +167,6 @@ async function assignBot() {
   }
 }
 
-function getBotStatus(bot) {
-  return bot.publishedTypebotId ? 'published' : 'draft';
-}
-
 onMounted(() => {
   fetchBots();
   store.dispatch('inboxes/get');
@@ -213,262 +180,208 @@ onMounted(() => {
         :title="t('BOTS.TITLE')"
         :description="t('BOTS.DESCRIPTION')"
         feature-name="bots"
-      />
-    </template>
-    <template #body>
-      <!-- Workflow type selector -->
-      <div v-if="currentView === 'selector'" class="flex flex-col gap-6">
-        <button
-          class="text-sm text-n-slate-11 hover:text-n-slate-12 self-start flex items-center gap-1"
-          @click="backToList"
-        >
-          <span class="i-lucide-arrow-left size-4" />
-          {{ t('BOTS.WEBHOOK.BACK') }}
-        </button>
-        <h3 class="text-base font-medium text-n-slate-12">
-          {{ t('BOTS.SELECTOR.TITLE') }}
-        </h3>
-        <div class="grid grid-cols-1 xs:grid-cols-2 gap-6 max-w-3xl">
-          <ChannelSelector
-            :title="t('BOTS.SELECTOR.VISUAL_BOT')"
-            :description="t('BOTS.SELECTOR.VISUAL_BOT_DESC')"
-            icon="i-lucide-workflow"
-            @click="selectVisualBot"
-          />
-          <ChannelSelector
-            :title="t('BOTS.SELECTOR.WEBHOOK_BOT')"
-            :description="t('BOTS.SELECTOR.WEBHOOK_BOT_DESC')"
-            icon="i-lucide-webhook"
-            @click="selectWebhookBot"
-          />
-        </div>
-      </div>
-
-      <!-- Visual workflow creation -->
-      <div
-        v-else-if="currentView === 'create-visual'"
-        class="flex flex-col gap-6"
       >
-        <button
-          class="text-sm text-n-slate-11 hover:text-n-slate-12 self-start flex items-center gap-1"
-          @click="showSelector"
-        >
-          <span class="i-lucide-arrow-left size-4" />
-          {{ t('BOTS.WEBHOOK.BACK') }}
-        </button>
-        <div
-          class="flex flex-col gap-3 rounded-xl border border-n-weak bg-n-solid-2 p-4 max-w-lg"
-        >
-          <h3 class="text-sm font-medium text-n-slate-12">
-            {{ t('BOTS.CREATE') }}
-          </h3>
-          <input
-            v-model="newBotName"
-            type="text"
-            class="rounded-lg border border-n-weak bg-n-alpha-black2 px-3 py-2 text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-woot-500"
-            :placeholder="t('BOTS.CREATE_PLACEHOLDER')"
-            @keyup.enter="createBot"
-          />
+        <template #actions>
           <Button
-            :is-loading="isCreating"
-            :disabled="!newBotName.trim()"
+            v-if="!configError"
             icon="i-lucide-plus"
             :label="t('BOTS.CREATE')"
-            @click="createBot"
+            size="sm"
+            @click="openCreateDialog"
           />
-        </div>
-      </div>
-
-      <!-- Webhook workflow creation -->
+        </template>
+      </BaseSettingsHeader>
+    </template>
+    <template #body>
       <div
-        v-else-if="currentView === 'create-webhook'"
-        class="flex flex-col gap-6"
+        v-if="configError"
+        class="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center"
       >
-        <button
-          class="text-sm text-n-slate-11 hover:text-n-slate-12 self-start flex items-center gap-1"
-          @click="showSelector"
-        >
-          <span class="i-lucide-arrow-left size-4" />
-          {{ t('BOTS.WEBHOOK.BACK') }}
-        </button>
         <div
-          class="flex flex-col gap-4 rounded-xl border border-n-weak bg-n-solid-2 p-4 max-w-lg"
+          class="size-12 rounded-full flex items-center justify-center bg-n-alpha-2 text-n-slate-11"
         >
-          <h3 class="text-sm font-medium text-n-slate-12">
-            {{ t('BOTS.WEBHOOK.TITLE') }}
-          </h3>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-n-slate-11">
-              {{ t('BOTS.WEBHOOK.NAME_LABEL') }}
-            </label>
-            <input
-              v-model="webhookName"
-              type="text"
-              class="rounded-lg border border-n-weak bg-n-alpha-black2 px-3 py-2 text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-woot-500"
-              :placeholder="t('BOTS.WEBHOOK.NAME_PLACEHOLDER')"
-            />
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-n-slate-11">
-              {{ t('BOTS.WEBHOOK.URL_LABEL') }}
-            </label>
-            <input
-              v-model="webhookUrl"
-              type="url"
-              class="rounded-lg border border-n-weak bg-n-alpha-black2 px-3 py-2 text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-woot-500"
-              :placeholder="t('BOTS.WEBHOOK.URL_PLACEHOLDER')"
-            />
-          </div>
-          <Button
-            :is-loading="isCreating"
-            :disabled="!webhookName.trim() || !webhookUrl.trim()"
-            icon="i-lucide-plus"
-            :label="t('BOTS.WEBHOOK.CREATE')"
-            @click="createWebhookBot"
-          />
+          <span class="i-lucide-workflow size-5" aria-hidden="true" />
         </div>
+        <h3 class="text-sm font-medium text-n-slate-12 text-balance">
+          {{ t('BOTS.NOT_CONFIGURED') }}
+        </h3>
+        <p class="max-w-sm text-xs text-n-slate-11 text-pretty">
+          {{ t('BOTS.NOT_CONFIGURED_HELP') }}
+        </p>
       </div>
 
-      <!-- Main list view -->
-      <div v-else class="flex flex-col gap-6">
-        <!-- Config error -->
+      <div
+        v-else-if="!typebots.length && !isLoading"
+        class="flex flex-col items-center justify-center gap-4 py-16 px-6 text-center"
+      >
         <div
-          v-if="configError"
-          class="flex flex-col items-center justify-center gap-4 py-16 text-n-slate-11"
+          class="size-12 rounded-full flex items-center justify-center bg-n-alpha-2 text-n-slate-11"
         >
-          <span class="i-lucide-workflow size-12 text-n-slate-10" />
-          <p class="text-sm">{{ t('BOTS.NOT_CONFIGURED') }}</p>
-          <p class="max-w-md text-center text-xs text-n-slate-10">
-            {{ t('BOTS.NOT_CONFIGURED_HELP') }}
+          <span class="i-lucide-workflow size-5" aria-hidden="true" />
+        </div>
+        <div class="space-y-1.5 max-w-sm">
+          <h3 class="text-base font-medium text-n-slate-12 text-balance">
+            {{ t('BOTS.EMPTY_TITLE') }}
+          </h3>
+          <p class="text-sm text-n-slate-11 text-pretty">
+            {{ t('BOTS.EMPTY_SUBTITLE') }}
           </p>
         </div>
-
-        <template v-else>
-          <div class="flex justify-end">
-            <Button
-              icon="i-lucide-plus"
-              :label="t('BOTS.CREATE')"
-              @click="showSelector"
-            />
-          </div>
-
-          <!-- Workflow cards — same grid as inbox channel connectors -->
-          <div
-            v-if="typebots.length"
-            class="grid max-w-3xl grid-cols-1 xs:grid-cols-2 gap-6 sm:grid-cols-3"
-          >
-            <div
-              v-for="bot in typebots"
-              :key="bot.id"
-              class="relative bg-n-solid-1 gap-4 rounded-2xl flex flex-col justify-between -m-px py-6 px-5 border border-solid border-n-weak transition-all duration-200 hover:shadow-md"
-              style="--typebot-orange: #ff5924"
-              @mouseenter="$event.currentTarget.style.borderColor = '#ad4d31'"
-              @mouseleave="$event.currentTarget.style.borderColor = ''"
-            >
-              <div class="flex flex-col gap-5">
-                <div class="flex items-start justify-between">
-                  <div
-                    class="flex size-10 items-center justify-center rounded-full bg-n-alpha-2"
-                  >
-                    <span class="i-lucide-workflow size-5 text-n-slate-10" />
-                  </div>
-                  <span
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-n-alpha-2 text-n-slate-11"
-                    :style="
-                      getBotStatus(bot) === 'published'
-                        ? 'border: 1px solid #ff5924'
-                        : ''
-                    "
-                  >
-                    {{
-                      getBotStatus(bot) === 'published'
-                        ? t('BOTS.STATUS.PUBLISHED')
-                        : t('BOTS.STATUS.DRAFT')
-                    }}
-                  </span>
-                </div>
-                <div class="flex flex-col items-start gap-1.5">
-                  <h3
-                    class="text-n-slate-12 text-sm text-start font-medium capitalize truncate w-full"
-                  >
-                    {{ bot.name }}
-                  </h3>
-                  <p class="text-n-slate-11 text-start text-sm">
-                    {{
-                      getBotStatus(bot) === 'published'
-                        ? t('BOTS.CARD.PUBLISHED_DESC')
-                        : t('BOTS.CARD.DRAFT_DESC')
-                    }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5 pt-3 border-t border-n-weak">
-                <button
-                  class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-white transition-colors"
-                  style="background-color: #ff5924"
-                  @mouseenter="$event.target.style.backgroundColor = '#e64d1a'"
-                  @mouseleave="$event.target.style.backgroundColor = '#ff5924'"
-                  @click="editBot(bot)"
-                >
-                  <span class="i-lucide-pencil size-3.5" />
-                  {{ t('BOTS.EDIT') }}
-                </button>
-                <Button
-                  v-if="getBotStatus(bot) === 'draft'"
-                  icon="i-lucide-upload"
-                  :label="t('BOTS.PUBLISH')"
-                  size="xs"
-                  slate
-                  faded
-                  class="flex-1"
-                  @click="publishBot(bot)"
-                />
-                <Button
-                  v-if="getBotStatus(bot) === 'published'"
-                  icon="i-lucide-inbox"
-                  :label="t('BOTS.ASSIGN')"
-                  size="xs"
-                  slate
-                  faded
-                  class="flex-1"
-                  @click="openAssignDialog(bot)"
-                />
-                <Button
-                  icon="i-lucide-trash-2"
-                  size="xs"
-                  ruby
-                  ghost
-                  @click="deleteBot(bot)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty state -->
-          <div
-            v-if="!typebots.length && !isLoading && !configError"
-            class="flex flex-col items-center justify-center gap-3 py-12 text-n-slate-11"
-          >
-            <span class="i-lucide-workflow size-10 text-n-slate-10" />
-            <p class="text-sm">{{ t('BOTS.EMPTY') }}</p>
-          </div>
-        </template>
+        <Button
+          icon="i-lucide-plus"
+          :label="t('BOTS.CREATE_CTA')"
+          size="sm"
+          @click="openCreateDialog"
+        />
       </div>
 
-      <!-- Assign dialog -->
+      <div
+        v-else
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl"
+      >
+        <div
+          v-for="bot in typebots"
+          :key="bot.id"
+          class="group relative flex flex-col gap-4 rounded-2xl border border-n-weak bg-n-solid-1 p-5 transition-colors duration-150 ease-out hover:bg-n-alpha-1"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div
+              class="size-10 rounded-full flex items-center justify-center bg-n-alpha-2 text-n-slate-11"
+            >
+              <span class="i-lucide-workflow size-5" aria-hidden="true" />
+            </div>
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums"
+              :class="
+                getBotStatus(bot) === 'published'
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  : 'bg-n-alpha-2 text-n-slate-11'
+              "
+            >
+              <span
+                class="size-1.5 rounded-full"
+                :class="
+                  getBotStatus(bot) === 'published'
+                    ? 'bg-emerald-500'
+                    : 'bg-n-slate-9'
+                "
+                aria-hidden="true"
+              />
+              {{
+                getBotStatus(bot) === 'published'
+                  ? t('BOTS.STATUS.PUBLISHED')
+                  : t('BOTS.STATUS.DRAFT')
+              }}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0 space-y-1">
+            <h3
+              class="text-sm font-medium text-n-slate-12 truncate text-balance"
+            >
+              {{ bot.name }}
+            </h3>
+            <p class="text-xs text-n-slate-11 text-pretty line-clamp-2">
+              {{
+                getBotStatus(bot) === 'published'
+                  ? t('BOTS.CARD.PUBLISHED_DESC')
+                  : t('BOTS.CARD.DRAFT_DESC')
+              }}
+            </p>
+          </div>
+          <div class="flex items-center gap-1.5 pt-3 border-t border-n-weak">
+            <button
+              type="button"
+              :aria-label="t('BOTS.EDIT_ARIA')"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-white bg-[#ff5924] hover:bg-[#e64d1a] cursor-pointer transition-colors duration-150 ease-out"
+              @click="editBot(bot)"
+            >
+              <span class="i-lucide-pencil size-3.5" aria-hidden="true" />
+              {{ t('BOTS.EDIT') }}
+            </button>
+            <button
+              v-if="getBotStatus(bot) === 'draft'"
+              type="button"
+              :aria-label="t('BOTS.PUBLISH_ARIA')"
+              class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-n-slate-12 bg-n-alpha-2 hover:bg-n-alpha-3 cursor-pointer transition-colors duration-150 ease-out"
+              @click="publishBot(bot)"
+            >
+              <span class="i-lucide-upload size-3.5" aria-hidden="true" />
+              {{ t('BOTS.PUBLISH') }}
+            </button>
+            <button
+              v-else
+              type="button"
+              :aria-label="t('BOTS.ASSIGN_ARIA')"
+              class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-n-slate-12 bg-n-alpha-2 hover:bg-n-alpha-3 cursor-pointer transition-colors duration-150 ease-out"
+              @click="openAssignDialog(bot)"
+            >
+              <span class="i-lucide-inbox size-3.5" aria-hidden="true" />
+              {{ t('BOTS.ASSIGN') }}
+            </button>
+            <button
+              type="button"
+              :aria-label="t('BOTS.DELETE_ARIA')"
+              class="inline-flex items-center justify-center size-8 rounded-lg text-n-slate-11 hover:text-ruby-600 hover:bg-ruby-500/10 cursor-pointer transition-colors duration-150 ease-out"
+              @click="confirmDelete(bot)"
+            >
+              <span class="i-lucide-trash-2 size-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <Dialog
+        ref="createDialogRef"
+        :title="t('BOTS.CREATE_DIALOG_TITLE')"
+        :description="t('BOTS.CREATE_DIALOG_DESCRIPTION')"
+        :confirm-button-label="t('BOTS.CREATE_CTA')"
+        :is-loading="isCreating"
+        :disable-confirm-button="!newBotName.trim()"
+        width="md"
+        @confirm="createBot"
+      >
+        <div class="flex flex-col gap-2 pt-1">
+          <label for="new-bot-name" class="text-xs font-medium text-n-slate-11">
+            {{ t('BOTS.CREATE_PLACEHOLDER') }}
+          </label>
+          <input
+            id="new-bot-name"
+            ref="createInputRef"
+            v-model="newBotName"
+            type="text"
+            :placeholder="t('BOTS.CREATE_PLACEHOLDER')"
+            class="h-9 rounded-lg border border-n-weak bg-n-alpha-black2 px-3 text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff5924] transition-colors duration-150 ease-out"
+            @keyup.enter="createBot"
+          />
+        </div>
+      </Dialog>
+
+      <Dialog
+        ref="deleteDialogRef"
+        type="alert"
+        :title="t('BOTS.DELETE_TITLE')"
+        :description="t('BOTS.DELETE_CONFIRM')"
+        :confirm-button-label="t('BOTS.DELETE_CONFIRM_BUTTON')"
+        :is-loading="isDeleting"
+        @confirm="deleteBot"
+      />
+
       <Dialog
         ref="assignDialogRef"
         :title="t('BOTS.ASSIGN')"
         :confirm-button-label="t('BOTS.ASSIGN')"
+        :disable-confirm-button="!selectedInboxId"
+        width="md"
         @confirm="assignBot"
       >
-        <div class="flex flex-col gap-3 py-2">
-          <label class="text-xs font-medium text-n-slate-11">
+        <div class="flex flex-col gap-2 pt-1">
+          <label for="assign-inbox" class="text-xs font-medium text-n-slate-11">
             {{ t('BOTS.SELECT_INBOX') }}
           </label>
           <select
+            id="assign-inbox"
             v-model="selectedInboxId"
-            class="rounded-lg border border-n-weak bg-n-alpha-black2 px-3 py-2 text-sm text-n-slate-12 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-woot-500"
+            class="h-9 rounded-lg border border-n-weak bg-n-alpha-black2 px-3 text-sm text-n-slate-12 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff5924] transition-colors duration-150 ease-out"
           >
             <option value="" disabled>
               {{ t('BOTS.SELECT_INBOX') }}

@@ -217,12 +217,20 @@ defineExpose({
       </div>
     </div>
 
-    <Button
-      type="submit"
-      :label="buttonLabel"
-      :disabled="!validationState.isValid || isLoading"
-      :is-loading="isLoading"
-    />
+    <div class="flex items-center gap-3">
+      <Button
+        type="submit"
+        :label="buttonLabel"
+        :disabled="!validationState.isValid || isLoading"
+        :is-loading="isLoading"
+      />
+      <span
+        v-if="!validationState.isValid && !isLoading"
+        class="text-xs text-n-slate-10"
+      >
+        {{ t(`${BASE_KEY}.FORM.FILL_REQUIRED`) }}
+      </span>
+    </div>
 
     <div
       v-if="showInboxSection"

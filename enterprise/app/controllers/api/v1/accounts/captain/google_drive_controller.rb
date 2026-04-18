@@ -17,6 +17,14 @@ class Api::V1::Accounts::Captain::GoogleDriveController < Api::V1::Accounts::Bas
   end
 
   def create
+    client_id = GlobalConfigService.load('GOOGLE_OAUTH_CLIENT_ID', nil)
+    if client_id.blank?
+      return render json: {
+        success: false,
+        error: 'Google Drive is not configured on this server. Ask an admin to set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.'
+      }, status: :service_unavailable
+    end
+
     redirect_url = google_client.auth_code.authorize_url(
       redirect_uri: "#{base_url}/google/drive/callback",
       scope: 'https://www.googleapis.com/auth/drive.readonly',
@@ -24,7 +32,7 @@ class Api::V1::Accounts::Captain::GoogleDriveController < Api::V1::Accounts::Bas
       prompt: 'consent',
       access_type: 'offline',
       state: build_state,
-      client_id: GlobalConfigService.load('GOOGLE_OAUTH_CLIENT_ID', nil)
+      client_id: client_id
     )
 
     render json: { success: true, url: redirect_url }
