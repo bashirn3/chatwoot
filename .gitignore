@@ -27,8 +27,21 @@ node_modules
 master.key
 *.rdb
 
-# Ignore env files
+# Ignore env files — never commit real secrets.
+# .env.example is the only env file that stays tracked (documents the shape).
 .env
+.env.*
+!.env.example
+
+# Agent / tooling workspaces that must never land in git history.
+graphify-out/
+.graphifyignore
+.claude/worktrees/
+
+# The whatsapp-ai-framework is a sibling project with its own git history;
+# it is cloned here for local dev convenience but must not enter the main
+# chatwoot repo as a nested checkout.
+whatsapp-ai-framework/
 
 public/uploads
 public/packs*
