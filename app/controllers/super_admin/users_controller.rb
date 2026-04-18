@@ -72,7 +72,7 @@ class SuperAdmin::UsersController < SuperAdmin::ApplicationController
       end
 
       user.account_users.destroy_all
-      user.access_tokens.destroy_all
+      user.access_token&.destroy
       user.destroy!
     end
 

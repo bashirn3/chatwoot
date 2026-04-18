@@ -66,7 +66,7 @@ class Api::V1::ProfilesController < Api::BaseController
       end
 
       @user.account_users.destroy_all
-      @user.access_tokens.destroy_all
+      @user.access_token&.destroy
 
       original_email = @user.email
       suffix = "-deleted-#{Time.current.to_i}.com"
