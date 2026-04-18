@@ -35,6 +35,11 @@
           }
         }
       },
+      "AVATAR_STYLE": {
+        "TITLE": "Avatar Style",
+        "NOTE": "Choose a DiceBear avatar style used when no profile picture is uploaded.",
+        "UPDATE_SUCCESS": "Avatar style updated successfully"
+      },
       "INTERFACE_SECTION": {
         "TITLE": "Interface",
         "NOTE": "Customize the look and feel of your Chatwoot dashboard.",
@@ -94,6 +99,32 @@
         "CONFIRM_HINT": "Click again to confirm",
         "RESET_SUCCESS": "Access token regenerated successfully",
         "RESET_ERROR": "Unable to regenerate access token. Please try again"
+      },
+      "DANGER_ZONE": {
+        "TITLE": "Danger zone",
+        "SUBTITLE": "These actions are irreversible. Read carefully before confirming.",
+        "CANCEL": "Cancel",
+        "LEAVE": {
+          "HEADING": "Leave this organisation",
+          "DESCRIPTION": "Remove yourself from {orgName}. You'll lose access to its inboxes, conversations and settings. The organisation itself and its other members are unaffected.",
+          "BUTTON": "Leave organisation",
+          "CONFIRM_TITLE": "Leave {orgName}?",
+          "CONFIRM_BODY": "You will immediately lose access to this organisation. You can always be re-invited later.",
+          "SOLE_ADMIN_HINT": "You're the sole administrator of this organisation. Promote another admin first if you want to leave, or use the delete option below to remove it entirely.",
+          "SUCCESS": "You have left the organisation.",
+          "ERROR": "Couldn't leave the organisation. Please try again."
+        },
+        "DELETE": {
+          "HEADING": "Delete my account permanently",
+          "DESCRIPTION": "Wipes your user account. Organisations where you're the sole administrator are also permanently deleted, including all their inboxes, conversations, contacts and WhatsApp connections. Your email is freed up so you can sign up fresh later.",
+          "BUTTON": "Delete account",
+          "CONFIRM_TITLE": "Delete your account permanently?",
+          "CONFIRM_BODY": "This cannot be undone. Every organisation where you are the sole administrator will be queued for permanent deletion along with their inboxes, conversations, contacts and WhatsApp connections. You will be signed out immediately.",
+          "CONFIRM_PROMPT": "Type {word} to confirm:",
+          "CONFIRM_WORD": "DELETE",
+          "CONFIRM_BUTTON": "Delete everything",
+          "ERROR": "Couldn't delete the account. Please try again."
+        }
       },
       "AUDIO_NOTIFICATIONS_SECTION": {
         "TITLE": "Audio Alerts",
@@ -373,6 +404,19 @@
     "BETA": "Beta",
     "REPORTS_OVERVIEW": "Overview",
     "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
+    "WHATSAPP_STATUS": {
+      "CONNECTED": "Connected",
+      "CONNECTING": "Connecting…",
+      "DISCONNECTED": "Disconnected — needs re-linking",
+      "UNKNOWN": "Status unknown"
+    },
+    "WHATSAPP_DELETE": {
+      "TOOLTIP": "Delete this WhatsApp connection",
+      "CONFIRM": "Confirm delete",
+      "CANCEL": "Cancel",
+      "SUCCESS": "Deleted {name}",
+      "ERROR": "Couldn't delete {name}. Please try again."
+    },
     "HELP_CENTER": {
       "TITLE": "Help Center",
       "ARTICLES": "Articles",
@@ -655,6 +699,10 @@
     }
   },
   "ASSIGNMENT_POLICY": {
+    "VALIDATION": {
+      "NAME_REQUIRED": "Policy name is required",
+      "DESCRIPTION_REQUIRED": "Description is required"
+    },
     "INDEX": {
       "HEADER": {
         "TITLE": "Agent assignment",
@@ -768,6 +816,7 @@
             "DESCRIPTION": "The conversation waiting the longest gets assigned first."
           }
         },
+        "FILL_REQUIRED": "Fill in the name and description to continue",
         "FAIR_DISTRIBUTION": {
           "LABEL": "Fair distribution policy",
           "DESCRIPTION": "Set the maximum number of conversations that can be assigned per agent within a time window to avoid overloading any one agent. This required field defaults to 100 conversations per hour.",
@@ -861,6 +910,7 @@
           },
           "EMPTY_STATE": "No inbox limit set"
         },
+        "FILL_REQUIRED": "Fill in the name and description to continue",
         "EXCLUSION_RULES": {
           "LABEL": "Exclusion rules",
           "DESCRIPTION": "Conversations that satisfy the following conditions would not count towards agent capacity",

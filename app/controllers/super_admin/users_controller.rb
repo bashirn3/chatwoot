@@ -52,6 +52,36 @@ class SuperAdmin::UsersController < SuperAdmin::ApplicationController
     redirect_back(fallback_location: super_admin_users_path)
   end
 
+  # Deleting a user via Administrate's default `destroy` would cascade their
+  # AccountUser rows but leave orphan accounts (no admins, inaccessible UI)
+  # behind. Super admins almost always mean "nuke this user and their org"
+  # — mirror that here by running the same path as self-delete.
+  def destroy
+    user = requested_resource
+
+    solo_admin_accounts = user.account_users
+                              .where(role: :administrator)
+                              .includes(:account)
+                              .select { |au| au.account.administrators.where.not(id: user.id).none? }
+                              .map(&:account)
+
+    ActiveRecord::Base.transaction do
+      solo_admin_accounts.each do |account|
+        Current.account = account
+        AccountDeletionService.new(account: account).perform
+      end
+
+      user.account_users.destroy_all
+      user.access_tokens.destroy_all
+      user.destroy!
+    end
+
+    # rubocop:disable Rails/I18nLocaleTexts
+    redirect_to super_admin_users_path,
+                notice: "User destroyed. #{solo_admin_accounts.size} solo-admin account(s) queued for deletion."
+    # rubocop:enable Rails/I18nLocaleTexts
+  end
+
   def scoped_resource
     resource_class.with_attached_avatar
   end

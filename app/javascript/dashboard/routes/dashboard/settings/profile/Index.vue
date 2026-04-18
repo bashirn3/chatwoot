@@ -9,6 +9,7 @@ import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { parseAPIErrorResponse } from 'dashboard/store/utils/api';
 import { parseBoolean } from '@chatwoot/utils';
 import UserProfilePicture from './UserProfilePicture.vue';
+import AvatarStylePicker from './AvatarStylePicker.vue';
 import UserBasicDetails from './UserBasicDetails.vue';
 import MessageSignature from './MessageSignature.vue';
 import FontSize from './FontSize.vue';
@@ -20,6 +21,7 @@ import AudioNotifications from './AudioNotifications.vue';
 import FormSection from 'dashboard/components/FormSection.vue';
 import AccessToken from './AccessToken.vue';
 import MfaSettingsCard from './MfaSettingsCard.vue';
+import DangerZone from './DangerZone.vue';
 import Policy from 'dashboard/components/policy.vue';
 import {
   ROLES,
@@ -33,6 +35,7 @@ export default {
     FontSize,
     UserLanguageSelect,
     UserProfilePicture,
+    AvatarStylePicker,
     Policy,
     UserBasicDetails,
     HotKeyCard,
@@ -41,9 +44,11 @@ export default {
     AudioNotifications,
     AccessToken,
     MfaSettingsCard,
+    DangerZone,
   },
   setup() {
-    const { isEditorHotKeyEnabled, updateUISettings } = useUISettings();
+    const { isEditorHotKeyEnabled, updateUISettings, uiSettings } =
+      useUISettings();
     const { currentFontSize, updateFontSize } = useFontSize();
     const { replaceInstallationName } = useBranding();
 
@@ -52,6 +57,7 @@ export default {
       updateFontSize,
       isEditorHotKeyEnabled,
       updateUISettings,
+      uiSettings,
       replaceInstallationName,
     };
   },
@@ -100,6 +106,9 @@ export default {
     }),
     isMfaEnabled() {
       return parseBoolean(window.chatwootConfig?.isMfaEnabled);
+    },
+    avatarStyle() {
+      return this.uiSettings?.avatar_style || 'adventurer';
     },
   },
   mounted() {
@@ -179,6 +188,10 @@ export default {
         useAlert(this.$t('PROFILE_SETTINGS.AVATAR_DELETE_FAILED'));
       }
     },
+    selectAvatarStyle(style) {
+      this.updateUISettings({ avatar_style: style });
+      useAlert(this.$t('PROFILE_SETTINGS.FORM.AVATAR_STYLE.UPDATE_SUCCESS'));
+    },
     toggleHotKey(key) {
       this.hotKeys = this.hotKeys.map(hotKey =>
         hotKey.key === key ? { ...hotKey, active: !hotKey.active } : hotKey
@@ -213,6 +226,11 @@ export default {
         :name="name"
         @change="updateProfilePicture"
         @delete="deleteProfilePicture"
+      />
+      <AvatarStylePicker
+        :name="name"
+        :current-style="avatarStyle"
+        @select="selectAvatarStyle"
       />
       <UserBasicDetails
         :name="name"
@@ -323,5 +341,7 @@ export default {
         @on-reset="resetAccessToken"
       />
     </FormSection>
+
+    <DangerZone />
   </div>
 </template>

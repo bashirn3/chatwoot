@@ -106,4 +106,19 @@ export default {
     const urlData = endPoints('resetAccessToken');
     return axios.post(urlData.url);
   },
+
+  // Leave a specific organisation without deleting the user. Backend refuses
+  // if the caller is the sole administrator (would orphan the account).
+  leaveAccount({ accountId }) {
+    return axios.post('/api/v1/profile/leave_account', {
+      account_id: accountId,
+    });
+  },
+
+  // Permanently delete the signed-in user. Every org where they are the sole
+  // administrator is scheduled for async deletion; their user record is
+  // soft-deleted (email renamed) so the address can sign up fresh.
+  deleteSelf() {
+    return axios.delete('/api/v1/profile');
+  },
 };
