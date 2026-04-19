@@ -29,23 +29,41 @@ module WhatsappBridge
       region&.configured?
     end
 
-    def get(path, timeout: DEFAULT_TIMEOUT)
-      request(:get, path, nil, timeout)
+    def get(path, **opts)
+      request(:get, path, nil, opts[:timeout] || DEFAULT_TIMEOUT)
     end
 
-    def post(path, body = nil, timeout: DEFAULT_TIMEOUT)
-      request(:post, path, body, timeout)
+    # Accepts either `post(path, { k: v })` or inline `post(path, k: v)` —
+    # both collapse to a plain hash body so callers don't have to think
+    # about positional-vs-keyword collisions with the `timeout:` kwarg.
+    def post(path, body = nil, **opts)
+      request(:post, path, coerce_body(body, opts), opts[:timeout] || DEFAULT_TIMEOUT)
     end
 
-    def put(path, body = nil, timeout: DEFAULT_TIMEOUT)
-      request(:put, path, body, timeout)
+    def put(path, body = nil, **opts)
+      request(:put, path, coerce_body(body, opts), opts[:timeout] || DEFAULT_TIMEOUT)
     end
 
-    def delete(path, timeout: DEFAULT_TIMEOUT)
-      request(:delete, path, nil, timeout)
+    def delete(path, **opts)
+      request(:delete, path, nil, opts[:timeout] || DEFAULT_TIMEOUT)
     end
 
     private
+
+    def coerce_body(body, opts)
+      return body if body.is_a?(Hash)
+      return body if body.nil? && opts.except(:timeout).empty?
+
+      # Treat remaining keyword args as the body hash (minus :timeout).
+      remaining = opts.except(:timeout)
+      if body.nil?
+        remaining
+      elsif remaining.empty?
+        body
+      else
+        (body || {}).merge(remaining)
+      end
+    end
 
     def request(method, path, body, timeout)
       return not_configured_error unless configured?

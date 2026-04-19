@@ -86,7 +86,7 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
 
     response = WhatsappBridge::RegionalClient.new(region_code).post(
       '/api/instances',
-      id: scoped_name, name: scoped_name, webhookUrl: webhook_url
+      { id: scoped_name, name: scoped_name, webhookUrl: webhook_url }
     )
 
     if response['error'].present?
