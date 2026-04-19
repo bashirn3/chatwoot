@@ -5,8 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import WhatsAppBridgeAPI from 'dashboard/api/whatsappBridge';
 import Button from 'dashboard/components-next/button/Button.vue';
-import Icon from 'dashboard/components-next/icon/Icon.vue';
-import { COUNTRY_PATHS } from './countryPaths.js';
+import { COUNTRY_PATHS, COUNTRY_BBOXES } from './countryPaths.js';
 
 const store = useStore();
 const route = useRoute();
@@ -17,9 +16,9 @@ const accountId = computed(() => route.params.accountId);
 const user = computed(() => store.getters.getCurrentUser || {});
 
 // Must match scripts/generate_europe_paths.mjs exactly.
-const VIEW_W = 1200;
+const VIEW_W = 1500;
 const LON_MIN = -20;
-const LON_MAX = 42;
+const LON_MAX = 50;
 const LAT_MIN = 34;
 const LAT_MAX = 72;
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
@@ -34,14 +33,12 @@ const projLat = lat => {
   return VIEW_H - ((my - MERC_Y_MIN) / (MERC_Y_MAX - MERC_Y_MIN)) * VIEW_H;
 };
 
-// Initial viewBox framing (active region focus): Nordics + UK with a
-// hint of Germany/France at the bottom. Computed from lat/lng bounds so
-// it stays correct if the generator bounds ever change.
+// Default focus: Nordics + UK, with Germany/France/Poland peeking in.
 const FOCUS_LAT_TOP = 69;
 const FOCUS_LAT_BOTTOM = 46;
 const FOCUS_LNG_LEFT = -15;
 const FOCUS_LNG_RIGHT = 38;
-const initialBox = () => {
+const focusBox = () => {
   const x = projLng(FOCUS_LNG_LEFT);
   const w = projLng(FOCUS_LNG_RIGHT) - x;
   const y = projLat(FOCUS_LAT_TOP);
@@ -49,10 +46,9 @@ const initialBox = () => {
   return { x, y, w, h };
 };
 
-// Absolute zoom constraints: fully zoomed in can show ~8 countries;
-// fully zoomed out shows the whole generated canvas.
-const MIN_BOX_W = 260;
-const MAX_BOX_W = VIEW_W;
+// When zooming into a single country, padding keeps the silhouette from
+// touching the SVG edge.
+const ZOOM_PADDING = 0.3; // 30% of bounding box
 
 const ACTIVE_COUNTRIES = ref(new Set());
 const ACTIVE_REGIONS = ref([]);
@@ -63,7 +59,8 @@ const hoveredIso = ref(null);
 const isCreating = ref(false);
 const errorMessage = ref(null);
 
-const box = ref(initialBox());
+const box = ref(focusBox());
+const tweenHandle = ref(null);
 const svgEl = ref(null);
 const isDragging = ref(false);
 const dragState = ref(null);
@@ -104,7 +101,7 @@ const continueLabel = computed(() => {
     return t('ONBOARDING.COUNTRY_PICKER.STATUS.PROVISIONING');
   }
   if (selectedLabel.value) {
-    return t('ONBOARDING.COUNTRY_PICKER.CONTINUE_WITH', {
+    return t('ONBOARDING.COUNTRY_PICKER.SELECT_TO_CONTINUE', {
       country: selectedLabel.value,
     });
   }
@@ -123,15 +120,67 @@ const loadRegions = async () => {
   }
 };
 
+// --- viewBox tween ---
+// easeInOutCubic — smooth start/end, no overshoot (baseline-ui friendly).
+const easeInOutCubic = p => (p < 0.5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2);
+
+const tweenTo = (target, duration = 420) => {
+  if (tweenHandle.value) cancelAnimationFrame(tweenHandle.value);
+  const from = { ...box.value };
+  const start = performance.now();
+  const step = now => {
+    const elapsed = now - start;
+    const p = Math.min(1, elapsed / duration);
+    const k = easeInOutCubic(p);
+    box.value = {
+      x: from.x + (target.x - from.x) * k,
+      y: from.y + (target.y - from.y) * k,
+      w: from.w + (target.w - from.w) * k,
+      h: from.h + (target.h - from.h) * k,
+    };
+    if (p < 1) {
+      tweenHandle.value = requestAnimationFrame(step);
+    } else {
+      tweenHandle.value = null;
+    }
+  };
+  tweenHandle.value = requestAnimationFrame(step);
+};
+
+// Compute a viewBox target that frames a country's bbox with padding,
+// preserving the current box aspect ratio so the rendered map doesn't
+// visually resize / reflow.
+const zoomTargetFor = iso => {
+  const bb = COUNTRY_BBOXES[iso];
+  if (!bb) return null;
+  const padX = bb.w * ZOOM_PADDING;
+  const padY = bb.h * ZOOM_PADDING;
+  let w = bb.w + padX * 2;
+  let h = bb.h + padY * 2;
+  const currentAspect = box.value.w / box.value.h;
+  const targetAspect = w / h;
+  if (targetAspect > currentAspect) {
+    h = w / currentAspect;
+  } else {
+    w = h * currentAspect;
+  }
+  const cx = bb.x + bb.w / 2;
+  const cy = bb.y + bb.h / 2;
+  return { x: cx - w / 2, y: cy - h / 2, w, h };
+};
+
 const onCountryClick = iso => {
   if (!ACTIVE_COUNTRIES.value.has(iso)) return;
   selectedIso.value = iso;
   errorMessage.value = null;
+  const target = zoomTargetFor(iso);
+  if (target) tweenTo(target);
 };
 
-// --- zoom + pan ---
-// Convert a pointer event's clientX/clientY into viewBox coordinates so
-// zoom stays anchored at the cursor.
+// --- wheel + drag (kept behind the scenes; no visible controls) ---
+const MIN_BOX_W = 200;
+const MAX_BOX_W = VIEW_W;
+
 const clientToSvg = (clientX, clientY) => {
   const svg = svgEl.value;
   if (!svg) return null;
@@ -145,20 +194,17 @@ const clientToSvg = (clientX, clientY) => {
 
 const clampBox = ({ x, y, w, h }) => {
   const aspect = w / h;
-  // Width within [MIN, MAX]; height derived so aspect is preserved.
-  const clampedW = Math.max(MIN_BOX_W, Math.min(MAX_BOX_W, w));
-  const clampedH = clampedW / aspect;
-  // Keep the box from wandering entirely off-canvas. Allow some overscroll
-  // so dragging feels natural.
-  const maxX = VIEW_W - clampedW * 0.25;
-  const minX = -clampedW * 0.75;
-  const maxY = VIEW_H - clampedH * 0.25;
-  const minY = -clampedH * 0.75;
+  const cW = Math.max(MIN_BOX_W, Math.min(MAX_BOX_W, w));
+  const cH = cW / aspect;
+  const maxX = VIEW_W - cW * 0.25;
+  const minX = -cW * 0.75;
+  const maxY = VIEW_H - cH * 0.25;
+  const minY = -cH * 0.75;
   return {
     x: Math.min(maxX, Math.max(minX, x)),
     y: Math.min(maxY, Math.max(minY, y)),
-    w: clampedW,
-    h: clampedH,
+    w: cW,
+    h: cH,
   };
 };
 
@@ -166,12 +212,12 @@ const onWheel = event => {
   event.preventDefault();
   const anchor = clientToSvg(event.clientX, event.clientY);
   if (!anchor) return;
-  const factor = Math.exp(event.deltaY * 0.0015); // 1 = no change
+  const factor = Math.exp(event.deltaY * 0.0015);
   const newW = box.value.w * factor;
   const newH = box.value.h * factor;
-  // Adjust origin so the cursor stays anchored at `anchor`.
   const relX = (anchor.x - box.value.x) / box.value.w;
   const relY = (anchor.y - box.value.y) / box.value.h;
+  if (tweenHandle.value) cancelAnimationFrame(tweenHandle.value);
   box.value = clampBox({
     x: anchor.x - relX * newW,
     y: anchor.y - relY * newH,
@@ -187,6 +233,7 @@ const onPointerDown = event => {
     clientX: event.clientX,
     clientY: event.clientY,
     startBox: { ...box.value },
+    moved: false,
   };
   svgEl.value?.setPointerCapture?.(event.pointerId);
 };
@@ -194,41 +241,32 @@ const onPointerDown = event => {
 const onPointerMove = event => {
   if (!isDragging.value || !dragState.value) return;
   const { clientX, clientY, startBox } = dragState.value;
+  const dx = event.clientX - clientX;
+  const dy = event.clientY - clientY;
+  if (Math.hypot(dx, dy) > 3) dragState.value.moved = true;
   const rect = svgEl.value.getBoundingClientRect();
-  const dx = ((event.clientX - clientX) / rect.width) * startBox.w;
-  const dy = ((event.clientY - clientY) / rect.height) * startBox.h;
+  const ndx = (dx / rect.width) * startBox.w;
+  const ndy = (dy / rect.height) * startBox.h;
+  if (tweenHandle.value) cancelAnimationFrame(tweenHandle.value);
   box.value = clampBox({
-    x: startBox.x - dx,
-    y: startBox.y - dy,
+    x: startBox.x - ndx,
+    y: startBox.y - ndy,
     w: startBox.w,
     h: startBox.h,
   });
 };
 
 const onPointerUp = event => {
+  if (!isDragging.value) return;
   isDragging.value = false;
-  dragState.value = null;
   svgEl.value?.releasePointerCapture?.(event.pointerId);
+  // If the pointer hasn't actually moved, this is a click — let the click
+  // handler fire. If it's a drag, swallow the upcoming click by setting
+  // a brief suppress flag.
+  dragState.value = null;
 };
 
-const zoomBy = factor => {
-  const cx = box.value.x + box.value.w / 2;
-  const cy = box.value.y + box.value.h / 2;
-  const newW = box.value.w * factor;
-  const newH = box.value.h * factor;
-  box.value = clampBox({
-    x: cx - newW / 2,
-    y: cy - newH / 2,
-    w: newW,
-    h: newH,
-  });
-};
-const zoomIn = () => zoomBy(0.75);
-const zoomOut = () => zoomBy(1.33);
-const resetView = () => {
-  box.value = initialBox();
-};
-
+// --- instance creation ---
 const instanceNameFromEmail = () => {
   const email = (user.value?.email || '').trim().toLowerCase();
   if (email) {
@@ -297,12 +335,12 @@ watch(selectedIso, () => {
 
 onMounted(() => {
   loadRegions();
-  // Global pointer-up in case the pointer leaves the SVG mid-drag.
   window.addEventListener('pointerup', onPointerUp);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', onPointerUp);
+  if (tweenHandle.value) cancelAnimationFrame(tweenHandle.value);
 });
 </script>
 
@@ -331,8 +369,8 @@ onBeforeUnmount(() => {
       </span>
     </div>
 
-    <!-- Map — full-bleed. Transparent background, bright country outlines,
-         zoom/pan enabled. -->
+    <!-- Map — full-bleed, transparent, no visible zoom chrome. Click a
+         country to zoom into it. -->
     <div
       class="relative w-[100vw] -mx-[calc((100vw-100%)/2)] flex justify-center"
       :aria-label="displayLabel || $t('ONBOARDING.COUNTRY_PICKER.TITLE')"
@@ -370,48 +408,7 @@ onBeforeUnmount(() => {
             </title>
           </path>
         </g>
-        <g>
-          <circle
-            v-for="region in ACTIVE_REGIONS"
-            :key="`dc-${region.code}`"
-            :cx="projLng(region.lng)"
-            :cy="projLat(region.lat)"
-            r="3.2"
-            class="dc-dot"
-            :class="{ 'dc-dot-active': selectedIso === region.country }"
-          />
-        </g>
       </svg>
-
-      <!-- Zoom controls, bottom-right of the map -->
-      <div
-        class="absolute bottom-3 right-3 sm:right-6 flex flex-col gap-1 rounded-lg bg-n-solid-2/80 dark:bg-n-alpha-black2/90 ring-1 ring-n-weak backdrop-blur-[2px] p-1"
-      >
-        <button
-          type="button"
-          class="size-7 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
-          :aria-label="$t('ONBOARDING.COUNTRY_PICKER.ZOOM_IN')"
-          @click="zoomIn"
-        >
-          <Icon icon="i-lucide-plus" class="size-4" />
-        </button>
-        <button
-          type="button"
-          class="size-7 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
-          :aria-label="$t('ONBOARDING.COUNTRY_PICKER.ZOOM_OUT')"
-          @click="zoomOut"
-        >
-          <Icon icon="i-lucide-minus" class="size-4" />
-        </button>
-        <button
-          type="button"
-          class="size-7 inline-flex items-center justify-center rounded-md text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
-          :aria-label="$t('ONBOARDING.COUNTRY_PICKER.RESET_VIEW')"
-          @click="resetView"
-        >
-          <Icon icon="i-lucide-locate" class="size-4" />
-        </button>
-      </div>
     </div>
 
     <Transition
@@ -457,8 +454,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Transparent background, bright hairline country borders. Single emerald
-   accent. No glow, no gradients. */
 .country-path {
   stroke: rgb(255 255 255 / 0.55);
   stroke-width: 0.6;
@@ -478,7 +473,7 @@ onBeforeUnmount(() => {
 }
 .country-expansion {
   fill: rgb(148 163 184 / 0.28);
-  stroke: rgb(255 255 255 / 0.35);
+  stroke: rgb(255 255 255 / 0.4);
   stroke-dasharray: 2 2;
 }
 :global(.dark) .country-expansion {
@@ -491,18 +486,8 @@ onBeforeUnmount(() => {
   fill: rgb(16 185 129 / 0.55);
 }
 .country-selected {
-  fill: rgb(16 185 129 / 0.75);
+  fill: rgb(16 185 129 / 0.78);
   stroke: rgb(255 255 255 / 0.9);
   stroke-width: 1;
-}
-.dc-dot {
-  fill: rgb(255 255 255 / 0.85);
-  stroke: rgb(16 185 129);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-}
-.dc-dot-active {
-  fill: rgb(16 185 129);
-  stroke: rgb(255 255 255);
 }
 </style>

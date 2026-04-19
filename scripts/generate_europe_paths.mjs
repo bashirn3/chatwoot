@@ -2,26 +2,27 @@
 /**
  * One-shot generator for the country paths used by the onboarding
  * CountryPicker.vue map. Consumes a WGS84 GeoJSON of European countries,
- * projects the coordinates onto an SVG viewBox (equirectangular), and
- * writes a JS module that exports the paths.
+ * projects the coordinates onto an SVG viewBox (Mercator), and writes a
+ * JS module that exports:
+ *   - EU_MAP_VIEWBOX   — full-canvas viewBox string
+ *   - COUNTRY_PATHS    — { ISO2: 'M…Z' } per country
+ *   - COUNTRY_BBOXES   — { ISO2: { x, y, w, h } } per country in viewBox coords
  *
  * Run from repo root:
  *   node scripts/generate_europe_paths.mjs <path-to-europe.geojson>
- *
- * The committed output lives at
- *   app/javascript/dashboard/routes/dashboard/onboarding/countryPaths.js
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Mercator viewport covering the full European theatre. The CountryPicker
-// renders this data inside its own smaller viewBox centred on the active
-// region (Nordics + UK), so users see the focused area by default but
-// can scroll-zoom / drag to reveal Spain / Italy / Baltics etc.
-const VIEW_W = 1200;
+// Mercator viewport covering the European theatre wide enough to include
+// the European part of Russia, Ukraine, Belarus, Moldova, the Balkans,
+// Greece and Turkey. The CountryPicker renders this data inside its own
+// smaller viewBox centred on the Nordics + UK by default; the extra
+// geography ensures no country floats in an empty void.
+const VIEW_W = 1500;
 const LON_MIN = -20;
-const LON_MAX = 42;
+const LON_MAX = 50;
 const LAT_MIN = 34;
 const LAT_MAX = 72;
 
@@ -29,24 +30,25 @@ const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);
 const MERC_Y_MAX = mercY(LAT_MAX);
 const PIXELS_PER_LNG = VIEW_W / (LON_MAX - LON_MIN);
-// Projected vertical span (deg lng units) * pixels per unit → viewport height.
 const VIEW_H = Math.round(
   (MERC_Y_MAX - MERC_Y_MIN) * (180 / Math.PI) * PIXELS_PER_LNG
 );
 
-// Which countries to include. "active" + "expansion" + a few neighbouring
-// "context" countries so the map doesn't have weird holes.
+// ACTIVE = regions we serve. EXPANSION = coming-soon tiles. CONTEXT = shown
+// non-clickable so the continent reads as a continent, not a floating set
+// of active blobs.
 const ACTIVE = ['DE', 'FR', 'IT', 'FI', 'SE', 'NO', 'GB'];
 const EXPANSION = ['NL', 'IE', 'ES', 'BE', 'CH', 'AT', 'DK', 'PL'];
 const CONTEXT = [
   'PT', 'CZ', 'SK', 'HU', 'SI', 'HR', 'RO', 'BG', 'GR', 'AL',
   'MK', 'ME', 'RS', 'BA', 'LU', 'LI', 'EE', 'LV', 'LT',
-  'IS', 'FO', 'AD', 'MC', 'SM', 'VA', 'MT', 'CY'
+  'IS', 'FO', 'AD', 'MC', 'SM', 'VA', 'MT', 'CY',
+  // Eastern EU + Russia + Turkey for complete context. Russia is clipped
+  // at LON_MAX=50 so only the European half renders.
+  'UA', 'BY', 'MD', 'RU', 'TR', 'GE', 'AM', 'AZ'
 ];
 const KEEP = new Set([...ACTIVE, ...EXPANSION, ...CONTEXT]);
 
-// Mercator projection — preserves angles and gives realistic country
-// silhouettes at European latitudes. SVG y grows downward so we flip.
 const project = ([lon, lat]) => {
   const x = ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * VIEW_W;
   const my = mercY(Math.max(-85, Math.min(85, lat)));
@@ -54,8 +56,6 @@ const project = ([lon, lat]) => {
   return [x, y];
 };
 
-// Ramer–Douglas–Peucker polyline simplification. Keeps shape recognisable
-// while dropping tiny oscillations that would otherwise bloat the SVG.
 const rdp = (points, epsilon) => {
   if (points.length <= 2) return points;
   let maxDist = 0;
@@ -86,28 +86,48 @@ const perpendicularDistance = ([px, py], [ax, ay], [bx, by]) => {
   return Math.hypot(px - cx, py - cy);
 };
 
-const ringToPath = (ring) => {
-  const projected = ring.map(project);
-  const simplified = rdp(projected, 0.6); // 0.6 SVG px tolerance ≈ cartographic 0.03°
-  if (simplified.length < 3) return null;
-  const [first, ...rest] = simplified;
-  const body = rest.map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`).join('');
-  return `M${first[0].toFixed(1)} ${first[1].toFixed(1)}${body}Z`;
-};
-
-const geometryToPath = (geometry) => {
+// Build both the path `d` and the bounding box for a geometry in one pass.
+const geometryToPathAndBBox = geometry => {
   const pieces = [];
-  const polygons = geometry.type === 'MultiPolygon'
-    ? geometry.coordinates
-    : [geometry.coordinates];
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  const polygons =
+    geometry.type === 'MultiPolygon'
+      ? geometry.coordinates
+      : [geometry.coordinates];
+
   for (const polygon of polygons) {
-    // Drop tiny islands (< 0.005 area in projected units) for cleanliness.
     const outer = polygon[0];
     if (!outer || outer.length < 4) continue;
-    const path = ringToPath(outer);
-    if (path) pieces.push(path);
+    const projected = outer.map(project);
+    const simplified = rdp(projected, 0.6);
+    if (simplified.length < 3) continue;
+    for (const [x, y] of simplified) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+    const [first, ...rest] = simplified;
+    const body = rest
+      .map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`)
+      .join('');
+    pieces.push(`M${first[0].toFixed(1)} ${first[1].toFixed(1)}${body}Z`);
   }
-  return pieces.join(' ');
+
+  if (pieces.length === 0) return null;
+  return {
+    path: pieces.join(' '),
+    bbox: {
+      x: +minX.toFixed(1),
+      y: +minY.toFixed(1),
+      w: +(maxX - minX).toFixed(1),
+      h: +(maxY - minY).toFixed(1),
+    },
+  };
 };
 
 const main = () => {
@@ -118,28 +138,37 @@ const main = () => {
   }
   const raw = fs.readFileSync(input, 'utf8');
   const geo = JSON.parse(raw);
-  const out = {};
+  const paths = {};
+  const bboxes = {};
   for (const feature of geo.features) {
-    const iso = feature.properties?.ISO2 || feature.properties?.iso_a2 || feature.properties?.iso;
+    const iso =
+      feature.properties?.ISO2 ||
+      feature.properties?.iso_a2 ||
+      feature.properties?.iso;
     if (!iso || !KEEP.has(iso)) continue;
-    const d = geometryToPath(feature.geometry);
-    if (d) out[iso] = d;
+    const result = geometryToPathAndBBox(feature.geometry);
+    if (result) {
+      paths[iso] = result.path;
+      bboxes[iso] = result.bbox;
+    }
   }
   const outPath = path.resolve(
     'app/javascript/dashboard/routes/dashboard/onboarding/countryPaths.js'
   );
   const header = `// AUTO-GENERATED by scripts/generate_europe_paths.mjs — do not hand-edit.
 // Source: europe.geojson (WGS84) simplified to viewBox ${VIEW_W}×${VIEW_H}.
-// ActiveCountries / ExpansionCountries / contextCountries sets live next to the component.
+// Lat/lng bounds: ${LAT_MIN}..${LAT_MAX}°N, ${LON_MIN}..${LON_MAX}°E.
 
 export const EU_MAP_VIEWBOX = '0 0 ${VIEW_W} ${VIEW_H}';
 
-export const COUNTRY_PATHS = Object.freeze(${JSON.stringify(out, null, 2)});
+export const COUNTRY_PATHS = Object.freeze(${JSON.stringify(paths, null, 2)});
+
+export const COUNTRY_BBOXES = Object.freeze(${JSON.stringify(bboxes, null, 2)});
 `;
   fs.writeFileSync(outPath, header);
   const size = Buffer.byteLength(header, 'utf8');
   console.log(
-    `Wrote ${Object.keys(out).length} countries (${(size / 1024).toFixed(1)} KB) → ${outPath}`
+    `Wrote ${Object.keys(paths).length} countries (${(size / 1024).toFixed(1)} KB) → ${outPath}`
   );
 };
 

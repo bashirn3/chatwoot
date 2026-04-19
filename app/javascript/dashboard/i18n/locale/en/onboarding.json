@@ -6,14 +6,12 @@
       "TITLE": "Select your region",
       "SUBTITLE": "",
       "PICK_A_COUNTRY": "Pick a country to continue",
+      "SELECT_TO_CONTINUE": "Select {country} to continue",
       "CONTINUE_WITH": "Continue with {country}",
       "CLICK_A_COUNTRY": "Click a country on the map to pick your region",
       "HOSTING_IN": "Hosting in {country}",
       "COVERED": "{count} countries covered",
       "COMING_SOON": "Coming soon",
-      "ZOOM_IN": "Zoom in",
-      "ZOOM_OUT": "Zoom out",
-      "RESET_VIEW": "Reset view",
       "STATUS": {
         "PROVISIONING": "Provisioning your server…",
         "VERIFYING": "Verifying the connection…"
