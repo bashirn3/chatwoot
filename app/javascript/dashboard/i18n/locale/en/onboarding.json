@@ -2,9 +2,9 @@
   "ONBOARDING": {
     "SKIP": "Skip",
     "COUNTRY_PICKER": {
-      "EYEBROW": "Select your home region",
-      "TITLE": "Where should we host your WhatsApp?",
-      "SUBTITLE": "Your number lives on a datacentre closest to you, with a residential IP to protect it from bans. Every WhatsApp inbox on this account is served from the same region.",
+      "EYEBROW": "First, choose your",
+      "TITLE": "Home country",
+      "SUBTITLE": "Your WhatsApp number lives on our closest datacentre with a residential IP for anti-ban stability. Every inbox you create stays in this region.",
       "PICK_A_COUNTRY": "Pick a country to continue",
       "CONTINUE_WITH": "Continue with {country}",
       "CLICK_A_COUNTRY": "Click a country on the map to pick your region",
@@ -33,6 +33,22 @@
         "DK": "Denmark",
         "PL": "Poland"
       }
+    },
+    "PROVISIONING": {
+      "EYEBROW": "Hold tight",
+      "TITLE": "Provisioning your WhatsApp instance",
+      "TITLE_WITH_COUNTRY": "Provisioning your WhatsApp instance in {country}",
+      "SUBTITLE": "We're spinning up a fresh Baileys session on our {region} servers. This usually takes 5–15 seconds.",
+      "ARIA_BUSY": "Provisioning in progress",
+      "STEPS": {
+        "CREATED": "Instance created",
+        "WAITING_QR": "Waiting for QR code",
+        "READY": "Ready to scan"
+      },
+      "SLOW": "Taking longer than expected. You can continue to the QR screen — it'll refresh itself when the server is ready.",
+      "BACK": "Pick another country",
+      "CONTINUE_ANYWAY": "Continue to QR",
+      "ERROR_DEFAULT": "We couldn't reach the server. Try again in a moment."
     },
     "HOOKUP": {
       "EYEBROW": "Start by connecting your",

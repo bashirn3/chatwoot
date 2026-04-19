@@ -61,9 +61,12 @@ trap 'rm -f "$FILE_LIST" /tmp/_sync_all.tar.gz' EXIT
     git ls-files -- "$d" 2>/dev/null || true
     git ls-files --others --exclude-standard -- "$d" 2>/dev/null || true
   done
-  # Always include top-level Gemfile/Gemfile.lock if changed — Ruby bundler
-  # needs them aligned with what the code imports.
-  git diff --name-only HEAD -- Gemfile Gemfile.lock 2>/dev/null || true
+  # Always include root-level dependency manifests so `pnpm install` /
+  # `bundle install` inside the container see new packages. Without these
+  # you get the classic "package synced but module not found" bite.
+  for manifest in Gemfile Gemfile.lock package.json pnpm-lock.yaml; do
+    [ -f "$manifest" ] && echo "$manifest"
+  done
 } \
   | grep -vE '^(graphify-out|\.claude|node_modules|tmp|public/vite|public/packs)/' \
   | grep -vE '^\.env' \

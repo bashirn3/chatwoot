@@ -43,6 +43,7 @@
     "@iconify-json/fluent": "^1.2.32",
     "@iconify-json/material-symbols": "^1.2.10",
     "@lk77/vue3-color": "^3.0.6",
+    "@lottiefiles/dotlottie-vue": "^0.11.11",
     "@radix-ui/colors": "^3.0.0",
     "@rails/actioncable": "6.1.3",
     "@rails/ujs": "^7.1.400",

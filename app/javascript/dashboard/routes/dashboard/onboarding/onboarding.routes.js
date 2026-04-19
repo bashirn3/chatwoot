@@ -1,6 +1,7 @@
 import { frontendURL } from '../../../helper/URLHelper';
 import OnboardingShell from './OnboardingShell.vue';
 import CountryPicker from './CountryPicker.vue';
+import Provisioning from './Provisioning.vue';
 import HookUp from './HookUp.vue';
 import AllSet from './AllSet.vue';
 
@@ -23,6 +24,15 @@ export const routes = [
         component: CountryPicker,
         meta: {
           showSkip: true,
+          permissions: ['administrator'],
+        },
+      },
+      {
+        path: 'provisioning',
+        name: 'onboarding_provisioning',
+        component: Provisioning,
+        meta: {
+          showSkip: false,
           permissions: ['administrator'],
         },
       },
