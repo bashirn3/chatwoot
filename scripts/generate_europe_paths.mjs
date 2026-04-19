@@ -15,15 +15,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const VIEW_W = 800;
-const VIEW_H = 700;
-
-// Europe bounding box (lon_min, lon_max, lat_min, lat_max) that fits the
-// countries we care about comfortably.
+// Mercator viewport. Height is derived from the projected latitude range
+// so country shapes come out geographically accurate. VIEW_W kept modest
+// so the resulting ~560×880 aspect fits a compact onboarding card.
+const VIEW_W = 560;
 const LON_MIN = -12;
 const LON_MAX = 32;
 const LAT_MIN = 34;
-const LAT_MAX = 72;
+const LAT_MAX = 70;
+
+const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
+const MERC_Y_MIN = mercY(LAT_MIN);
+const MERC_Y_MAX = mercY(LAT_MAX);
+const PIXELS_PER_LNG = VIEW_W / (LON_MAX - LON_MIN);
+// Projected vertical span (deg lng units) * pixels per unit → viewport height.
+const VIEW_H = Math.round(
+  (MERC_Y_MAX - MERC_Y_MIN) * (180 / Math.PI) * PIXELS_PER_LNG
+);
 
 // Which countries to include. "active" + "expansion" + a few neighbouring
 // "context" countries so the map doesn't have weird holes.
@@ -36,10 +44,12 @@ const CONTEXT = [
 ];
 const KEEP = new Set([...ACTIVE, ...EXPANSION, ...CONTEXT]);
 
+// Mercator projection — preserves angles and gives realistic country
+// silhouettes at European latitudes. SVG y grows downward so we flip.
 const project = ([lon, lat]) => {
   const x = ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * VIEW_W;
-  // SVG y grows downward; lat grows upward.
-  const y = VIEW_H - ((lat - LAT_MIN) / (LAT_MAX - LAT_MIN)) * VIEW_H;
+  const my = mercY(Math.max(-85, Math.min(85, lat)));
+  const y = VIEW_H - ((my - MERC_Y_MIN) / (MERC_Y_MAX - MERC_Y_MIN)) * VIEW_H;
   return [x, y];
 };
 

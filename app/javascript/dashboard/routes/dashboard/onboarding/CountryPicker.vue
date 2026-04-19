@@ -15,18 +15,25 @@ const { t } = useI18n();
 const accountId = computed(() => route.params.accountId);
 const user = computed(() => store.getters.getCurrentUser || {});
 
-// Map projection — must match scripts/generate_europe_paths.mjs.
-const VIEW_W = 800;
-const VIEW_H = 700;
+// Mercator projection constants — must match scripts/generate_europe_paths.mjs.
+const VIEW_W = 560;
 const LON_MIN = -12;
 const LON_MAX = 32;
 const LAT_MIN = 34;
-const LAT_MAX = 72;
+const LAT_MAX = 70;
+const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
+const MERC_Y_MIN = mercY(LAT_MIN);
+const MERC_Y_MAX = mercY(LAT_MAX);
+const VIEW_H = Math.round(
+  ((MERC_Y_MAX - MERC_Y_MIN) * (180 / Math.PI) * VIEW_W) / (LON_MAX - LON_MIN)
+);
 const projLng = lng => ((lng - LON_MIN) / (LON_MAX - LON_MIN)) * VIEW_W;
-const projLat = lat =>
-  VIEW_H - ((lat - LAT_MIN) / (LAT_MAX - LAT_MIN)) * VIEW_H;
+const projLat = lat => {
+  const clamped = Math.max(LAT_MIN - 1, Math.min(LAT_MAX + 1, lat));
+  const my = mercY(clamped);
+  return VIEW_H - ((my - MERC_Y_MIN) / (MERC_Y_MAX - MERC_Y_MIN)) * VIEW_H;
+};
 
-// Active regions come from the backend, expansion set is curated marketing.
 const ACTIVE_COUNTRIES = ref(new Set());
 const ACTIVE_REGIONS = ref([]);
 const EXPANSION = new Set(['NL', 'IE', 'ES', 'BE', 'CH', 'AT', 'DK', 'PL']);
@@ -37,11 +44,9 @@ const isCreating = ref(false);
 const errorMessage = ref(null);
 
 const countryName = iso => t(`ONBOARDING.COUNTRY_PICKER.COUNTRY_NAMES.${iso}`);
-
 const selectedLabel = computed(() =>
   selectedIso.value ? countryName(selectedIso.value) : null
 );
-
 const displayIso = computed(() => hoveredIso.value || selectedIso.value);
 const displayLabel = computed(() => {
   if (!displayIso.value) return null;
@@ -95,7 +100,6 @@ const onCountryClick = iso => {
   errorMessage.value = null;
 };
 
-// Email → URL-safe instance name, identical to HookUp.vue.
 const instanceNameFromEmail = () => {
   const email = (user.value?.email || '').trim().toLowerCase();
   if (email) {
@@ -137,8 +141,6 @@ const continueFlow = async () => {
     const regionLabel =
       ACTIVE_REGIONS.value.find(r => r.code === regionCode)?.label || null;
 
-    // Hand off to the provisioning screen. It polls the framework for QR
-    // readiness and moves the user to /hookup once the scan is ready.
     sessionStorage.setItem(
       'wasup_provisioning',
       JSON.stringify({
@@ -172,59 +174,30 @@ onMounted(loadRegions);
 
 <!-- eslint-disable @intlify/vue-i18n/no-dynamic-keys -->
 <template>
-  <section class="mx-auto w-full max-w-[940px] flex flex-col gap-8 sm:gap-10">
-    <!-- Header — mirrors HookUp exactly so the two onboarding steps read as one flow -->
-    <header class="flex flex-col items-center text-center gap-2">
-      <div class="mb-1.5" aria-hidden="true">
-        <span
-          class="inline-flex size-12 sm:size-14 items-center justify-center rounded-[14px] bg-emerald-500 ring-1 ring-black/5 dark:ring-white/10"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            class="size-6 sm:size-7 text-white"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        </span>
-      </div>
+  <section
+    class="mx-auto w-full max-w-[720px] flex flex-col items-center gap-5 sm:gap-6"
+  >
+    <!-- Minimal header: eyebrow + title only -->
+    <header class="flex flex-col items-center text-center gap-1.5">
       <span
         class="text-[10.5px] sm:text-[11px] font-medium uppercase tracking-[0.22em] text-n-slate-11"
       >
         {{ $t('ONBOARDING.COUNTRY_PICKER.EYEBROW') }}
       </span>
       <h1
-        class="text-[24px] sm:text-[32px] font-semibold tracking-tight text-balance text-n-slate-12 leading-[1.1]"
+        class="text-[26px] sm:text-[34px] font-semibold tracking-tight text-balance text-n-slate-12 leading-[1.05]"
       >
         {{ $t('ONBOARDING.COUNTRY_PICKER.TITLE') }}
       </h1>
-      <p
-        class="text-[12.5px] sm:text-[13.5px] text-pretty max-w-[480px] text-n-slate-11"
-      >
-        {{ $t('ONBOARDING.COUNTRY_PICKER.SUBTITLE') }}
-      </p>
     </header>
 
-    <!-- Map card — same card language as the HookUp video/QR cards -->
+    <!-- Map, transparent. Blends with the page background -->
     <div
-      class="relative rounded-2xl bg-white dark:bg-n-solid-2 border border-n-container dark:border-n-weak shadow-sm overflow-hidden"
+      class="relative w-full flex flex-col items-center"
+      :aria-label="displayLabel || $t('ONBOARDING.COUNTRY_PICKER.TITLE')"
     >
-      <!-- Eyebrow strip: covered count + hovering country name -->
-      <div
-        class="flex items-center justify-between px-5 pt-4 pb-2 text-[10.5px] font-medium uppercase tracking-[0.22em] min-h-[28px]"
-      >
-        <span class="text-n-slate-11">
-          {{
-            $t('ONBOARDING.COUNTRY_PICKER.COVERED', {
-              count: ACTIVE_COUNTRIES.size,
-            })
-          }}
-        </span>
+      <!-- Hovering / selected country name floats above the map -->
+      <div class="h-5 mb-1 text-[11px] font-medium uppercase tracking-[0.22em]">
         <span
           v-if="displayLabel"
           class="text-n-slate-12 transition-opacity duration-150"
@@ -233,85 +206,47 @@ onMounted(loadRegions);
         </span>
       </div>
 
-      <div class="px-4 pb-4">
-        <svg
-          :viewBox="EU_MAP_VIEWBOX"
-          class="w-full h-auto max-h-[380px] mx-auto select-none"
-          role="img"
-          :aria-label="$t('ONBOARDING.COUNTRY_PICKER.TITLE')"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <g>
-            <path
-              v-for="(d, iso) in COUNTRY_PATHS"
-              :key="iso"
-              :d="d"
-              class="country-path"
-              :class="[
-                countryClass(iso),
-                countryInteractive(iso)
-                  ? 'cursor-pointer'
-                  : 'pointer-events-none',
-              ]"
-              @click="onCountryClick(iso)"
-              @mouseenter="hoveredIso = iso"
-              @mouseleave="hoveredIso = null"
-            >
-              <title v-if="countryInteractive(iso)">
-                {{ countryName(iso) }}
-              </title>
-            </path>
-          </g>
-
-          <!-- Datacentre markers -->
-          <g>
-            <g v-for="region in ACTIVE_REGIONS" :key="`dc-${region.code}`">
-              <circle
-                :cx="projLng(region.lng)"
-                :cy="projLat(region.lat)"
-                r="2.6"
-                class="dc-dot"
-                :class="{ 'dc-dot-active': selectedIso === region.country }"
-              />
-            </g>
-          </g>
-        </svg>
-      </div>
-
-      <!-- Hosting chip -->
-      <div
-        class="px-5 pb-4 -mt-1 min-h-[42px] flex items-center justify-center"
+      <svg
+        :viewBox="EU_MAP_VIEWBOX"
+        class="w-full h-auto max-h-[42vh] sm:max-h-[44vh] select-none"
+        role="img"
+        :aria-label="$t('ONBOARDING.COUNTRY_PICKER.TITLE')"
+        preserveAspectRatio="xMidYMid meet"
       >
-        <Transition
-          enter-active-class="transition-opacity duration-150 ease-out"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="transition-opacity duration-100 ease-in absolute"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-          mode="out-in"
-        >
-          <span
-            v-if="selectedLabel"
-            key="chip"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/30 text-[12.5px] font-medium text-emerald-700 dark:text-emerald-300"
+        <g>
+          <path
+            v-for="(d, iso) in COUNTRY_PATHS"
+            :key="iso"
+            :d="d"
+            class="country-path"
+            :class="[
+              countryClass(iso),
+              countryInteractive(iso)
+                ? 'cursor-pointer'
+                : 'pointer-events-none',
+            ]"
+            @click="onCountryClick(iso)"
+            @mouseenter="hoveredIso = iso"
+            @mouseleave="hoveredIso = null"
           >
-            <span class="size-1.5 rounded-full bg-emerald-500" />
-            {{
-              $t('ONBOARDING.COUNTRY_PICKER.HOSTING_IN', {
-                country: selectedLabel,
-              })
-            }}
-          </span>
-          <span
-            v-else
-            key="hint"
-            class="text-[12px] text-n-slate-11 tracking-tight"
-          >
-            {{ $t('ONBOARDING.COUNTRY_PICKER.CLICK_A_COUNTRY') }}
-          </span>
-        </Transition>
-      </div>
+            <title v-if="countryInteractive(iso)">
+              {{ countryName(iso) }}
+            </title>
+          </path>
+        </g>
+        <!-- Datacentre markers, one per active region -->
+        <g>
+          <circle
+            v-for="region in ACTIVE_REGIONS"
+            :key="`dc-${region.code}`"
+            :cx="projLng(region.lng)"
+            :cy="projLat(region.lat)"
+            r="2.5"
+            class="dc-dot"
+            :class="{ 'dc-dot-active': selectedIso === region.country }"
+          />
+        </g>
+      </svg>
     </div>
 
     <!-- Error slot -->
@@ -326,14 +261,14 @@ onMounted(loadRegions);
       <p
         v-if="errorMessage"
         role="alert"
-        class="mx-auto text-center text-[12.5px] text-n-ruby-11 bg-n-ruby-9/10 rounded-lg px-4 py-2 max-w-[520px]"
+        class="text-center text-[12.5px] text-n-ruby-11 bg-n-ruby-9/10 rounded-lg px-4 py-2 max-w-[480px]"
       >
         {{ errorMessage }}
       </p>
     </Transition>
 
     <!-- Footer actions -->
-    <div class="flex items-center justify-center gap-3">
+    <div class="flex items-center justify-center gap-3 pt-1">
       <Button
         variant="faded"
         color="slate"
@@ -359,46 +294,48 @@ onMounted(loadRegions);
 </template>
 
 <style scoped>
-/* Baseline-UI compliant: single emerald accent, no gradients/glows, only
-   fill/stroke transitions (cheap; paint-only on small SVG paths). */
+/* Transparent page-blending aesthetic: no fills on the card, bright hairline
+   borders on countries for definition, solid-colour emerald fills only on
+   active / selected (no glow, no gradients — baseline-UI compliant). */
 .country-path {
-  stroke: rgb(148 163 184 / 0.4);
-  stroke-width: 0.6;
+  stroke: rgb(255 255 255 / 0.55);
+  stroke-width: 0.7;
   transition:
     fill 150ms ease-out,
     stroke 150ms ease-out;
 }
+:global(.dark) .country-path {
+  stroke: rgb(255 255 255 / 0.45);
+}
 .country-context {
-  fill: rgb(148 163 184 / 0.06);
+  fill: rgb(148 163 184 / 0.08);
 }
 :global(.dark) .country-context {
-  fill: rgb(226 232 240 / 0.04);
+  fill: rgb(226 232 240 / 0.05);
 }
 .country-active {
-  fill: rgb(16 185 129 / 0.18);
-  stroke: rgb(16 185 129 / 0.5);
-  stroke-width: 0.8;
+  fill: rgb(16 185 129 / 0.28);
 }
 .country-active:hover {
-  fill: rgb(16 185 129 / 0.34);
-  stroke: rgb(16 185 129 / 0.85);
+  fill: rgb(16 185 129 / 0.5);
 }
 .country-expansion {
-  fill: rgb(148 163 184 / 0.1);
-  stroke: rgb(148 163 184 / 0.55);
+  fill: rgb(148 163 184 / 0.12);
+  stroke: rgb(255 255 255 / 0.35);
   stroke-dasharray: 2 2;
 }
 .country-selected {
-  fill: rgb(16 185 129 / 0.55);
-  stroke: rgb(16 185 129);
-  stroke-width: 1.1;
+  fill: rgb(16 185 129 / 0.7);
+  stroke: rgb(255 255 255 / 0.9);
+  stroke-width: 1;
 }
 .dc-dot {
-  fill: rgb(16 185 129 / 0.9);
-  stroke: rgba(255, 255, 255, 0.9);
-  stroke-width: 0.8;
+  fill: rgb(255 255 255 / 0.85);
+  stroke: rgb(16 185 129);
+  stroke-width: 1;
 }
 .dc-dot-active {
   fill: rgb(16 185 129);
+  stroke: rgb(255 255 255);
 }
 </style>

@@ -2,9 +2,9 @@
   "ONBOARDING": {
     "SKIP": "Skip",
     "COUNTRY_PICKER": {
-      "EYEBROW": "First, choose your",
-      "TITLE": "Home country",
-      "SUBTITLE": "Your WhatsApp number lives on our closest datacentre with a residential IP for anti-ban stability. Every inbox you create stays in this region.",
+      "EYEBROW": "First",
+      "TITLE": "Select your region",
+      "SUBTITLE": "",
       "PICK_A_COUNTRY": "Pick a country to continue",
       "CONTINUE_WITH": "Continue with {country}",
       "CLICK_A_COUNTRY": "Click a country on the map to pick your region",
