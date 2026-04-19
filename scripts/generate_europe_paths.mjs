@@ -15,16 +15,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Mercator viewport. Bounds trimmed to 46–68°N so the aspect ratio comes
-// out landscape (~1.46:1) — the country picker wants a wide map that
-// features the Nordics / UK / northern Europe prominently, with Germany
-// and France just peeking in at the bottom. Far-northern Finland /
-// southern Italy / southern France fall off-canvas by design.
+// Mercator viewport covering the full European theatre. The CountryPicker
+// renders this data inside its own smaller viewBox centred on the active
+// region (Nordics + UK), so users see the focused area by default but
+// can scroll-zoom / drag to reveal Spain / Italy / Baltics etc.
 const VIEW_W = 1200;
-const LON_MIN = -16;
-const LON_MAX = 38;
-const LAT_MIN = 48;
-const LAT_MAX = 68;
+const LON_MIN = -20;
+const LON_MAX = 42;
+const LAT_MIN = 34;
+const LAT_MAX = 72;
 
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);

@@ -11,6 +11,9 @@
       "HOSTING_IN": "Hosting in {country}",
       "COVERED": "{count} countries covered",
       "COMING_SOON": "Coming soon",
+      "ZOOM_IN": "Zoom in",
+      "ZOOM_OUT": "Zoom out",
+      "RESET_VIEW": "Reset view",
       "STATUS": {
         "PROVISIONING": "Provisioning your server…",
         "VERIFYING": "Verifying the connection…"
