@@ -33,11 +33,14 @@ const projLat = lat => {
   return VIEW_H - ((my - MERC_Y_MIN) / (MERC_Y_MAX - MERC_Y_MIN)) * VIEW_H;
 };
 
-// Default focus: Nordics + UK, with Germany/France/Poland peeking in.
-const FOCUS_LAT_TOP = 69;
-const FOCUS_LAT_BOTTOM = 46;
-const FOCUS_LNG_LEFT = -15;
-const FOCUS_LNG_RIGHT = 38;
+// Default focus: Iceland + UK + Nordics + Denmark + Baltics at prominent
+// scale. Top of Norway/Finland pinned to the top edge, UK north cropped
+// to the bottom edge. This is the "slightly-zoomed" framing users
+// arrived at after a tiny pan — make it the standard.
+const FOCUS_LAT_TOP = 70;
+const FOCUS_LAT_BOTTOM = 53;
+const FOCUS_LNG_LEFT = -25;
+const FOCUS_LNG_RIGHT = 30;
 const focusBox = () => {
   const x = projLng(FOCUS_LNG_LEFT);
   const w = projLng(FOCUS_LNG_RIGHT) - x;
