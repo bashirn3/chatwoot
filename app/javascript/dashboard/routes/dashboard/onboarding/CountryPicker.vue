@@ -16,11 +16,11 @@ const accountId = computed(() => route.params.accountId);
 const user = computed(() => store.getters.getCurrentUser || {});
 
 // Must match scripts/generate_europe_paths.mjs exactly.
-const VIEW_W = 1500;
-const LON_MIN = -20;
-const LON_MAX = 50;
-const LAT_MIN = 34;
-const LAT_MAX = 72;
+const VIEW_W = 1200;
+const LON_MIN = -15;
+const LON_MAX = 26;
+const LAT_MIN = 36;
+const LAT_MAX = 71;
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);
 const MERC_Y_MAX = mercY(LAT_MAX);
@@ -64,6 +64,10 @@ const tweenHandle = ref(null);
 const svgEl = ref(null);
 const isDragging = ref(false);
 const dragState = ref(null);
+// Set when a pointerdown→move drag just happened. Consumed by the next
+// click listener to suppress the synthetic click on a path (otherwise a
+// drag ending over a country would register as a selection).
+const suppressNextClick = ref(false);
 
 const viewBoxStr = computed(
   () => `${box.value.x} ${box.value.y} ${box.value.w} ${box.value.h}`
@@ -170,6 +174,10 @@ const zoomTargetFor = iso => {
 };
 
 const onCountryClick = iso => {
+  if (suppressNextClick.value) {
+    suppressNextClick.value = false;
+    return;
+  }
   if (!ACTIVE_COUNTRIES.value.has(iso)) return;
   selectedIso.value = iso;
   errorMessage.value = null;
@@ -226,24 +234,32 @@ const onWheel = event => {
   });
 };
 
+// Drag threshold in CSS pixels. Below this we treat the gesture as a
+// click and let the path's @click fire normally. Above it we start
+// panning and mark the next synthetic click to be suppressed.
+const DRAG_THRESHOLD_PX = 4;
+
 const onPointerDown = event => {
   if (event.button !== 0) return;
-  isDragging.value = true;
+  // Note: deliberately NOT calling setPointerCapture — that diverts all
+  // pointer events to the <svg> element and kills <path>'s @click.
   dragState.value = {
     clientX: event.clientX,
     clientY: event.clientY,
     startBox: { ...box.value },
-    moved: false,
   };
-  svgEl.value?.setPointerCapture?.(event.pointerId);
+  isDragging.value = false;
 };
 
 const onPointerMove = event => {
-  if (!isDragging.value || !dragState.value) return;
+  if (!dragState.value) return;
   const { clientX, clientY, startBox } = dragState.value;
   const dx = event.clientX - clientX;
   const dy = event.clientY - clientY;
-  if (Math.hypot(dx, dy) > 3) dragState.value.moved = true;
+  if (!isDragging.value) {
+    if (Math.hypot(dx, dy) <= DRAG_THRESHOLD_PX) return;
+    isDragging.value = true;
+  }
   const rect = svgEl.value.getBoundingClientRect();
   const ndx = (dx / rect.width) * startBox.w;
   const ndy = (dy / rect.height) * startBox.h;
@@ -256,13 +272,9 @@ const onPointerMove = event => {
   });
 };
 
-const onPointerUp = event => {
-  if (!isDragging.value) return;
+const onPointerUp = () => {
+  if (isDragging.value) suppressNextClick.value = true;
   isDragging.value = false;
-  svgEl.value?.releasePointerCapture?.(event.pointerId);
-  // If the pointer hasn't actually moved, this is a click — let the click
-  // handler fire. If it's a drag, swallow the upcoming click by setting
-  // a brief suppress flag.
   dragState.value = null;
 };
 

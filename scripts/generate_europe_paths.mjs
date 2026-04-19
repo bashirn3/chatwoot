@@ -15,16 +15,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Mercator viewport covering the European theatre wide enough to include
-// the European part of Russia, Ukraine, Belarus, Moldova, the Balkans,
-// Greece and Turkey. The CountryPicker renders this data inside its own
-// smaller viewBox centred on the Nordics + UK by default; the extra
-// geography ensures no country floats in an empty void.
-const VIEW_W = 1500;
-const LON_MIN = -20;
-const LON_MAX = 50;
-const LAT_MIN = 34;
-const LAT_MAX = 72;
+// Mercator viewport covering Western + Northern Europe only. Russia,
+// Ukraine, the Balkans, Greece, and Turkey are intentionally excluded —
+// the country picker focuses on the regions we serve plus their
+// immediate neighbours, nothing more. Mediterranean trimmed at 36°N.
+const VIEW_W = 1200;
+const LON_MIN = -15;
+const LON_MAX = 26;
+const LAT_MIN = 36;
+const LAT_MAX = 71;
 
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);
@@ -34,18 +33,17 @@ const VIEW_H = Math.round(
   (MERC_Y_MAX - MERC_Y_MIN) * (180 / Math.PI) * PIXELS_PER_LNG
 );
 
-// ACTIVE = regions we serve. EXPANSION = coming-soon tiles. CONTEXT = shown
-// non-clickable so the continent reads as a continent, not a floating set
-// of active blobs.
+// ACTIVE = regions we serve. EXPANSION = coming-soon tiles. CONTEXT =
+// immediate Western/Northern/Central European neighbours so the map
+// reads as a continent silhouette, not floating active blobs. Russia,
+// Ukraine, Belarus, Moldova, Turkey and the Balkans are deliberately
+// not in this list.
 const ACTIVE = ['DE', 'FR', 'IT', 'FI', 'SE', 'NO', 'GB'];
 const EXPANSION = ['NL', 'IE', 'ES', 'BE', 'CH', 'AT', 'DK', 'PL'];
 const CONTEXT = [
-  'PT', 'CZ', 'SK', 'HU', 'SI', 'HR', 'RO', 'BG', 'GR', 'AL',
-  'MK', 'ME', 'RS', 'BA', 'LU', 'LI', 'EE', 'LV', 'LT',
-  'IS', 'FO', 'AD', 'MC', 'SM', 'VA', 'MT', 'CY',
-  // Eastern EU + Russia + Turkey for complete context. Russia is clipped
-  // at LON_MAX=50 so only the European half renders.
-  'UA', 'BY', 'MD', 'RU', 'TR', 'GE', 'AM', 'AZ'
+  'PT', 'CZ', 'SK', 'HU', 'SI',
+  'LU', 'LI', 'EE', 'LV', 'LT',
+  'IS', 'FO', 'AD', 'MC', 'SM', 'VA', 'MT'
 ];
 const KEEP = new Set([...ACTIVE, ...EXPANSION, ...CONTEXT]);
 
