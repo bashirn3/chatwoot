@@ -205,6 +205,19 @@ class Account < ApplicationRecord
     "execute format('create sequence IF NOT EXISTS camp_dpid_seq_%s', NEW.id);"
   end
 
+  # Home region for the WhatsApp bridge fleet. Set the first time an admin
+  # provisions an inbox via the onboarding country picker. All subsequent
+  # WhatsApp inboxes created on this account default to the same region so
+  # a single number-book lives on a single datacentre (anti-ban / latency).
+  # Public so controllers / serializers / the route guard can reach it.
+  public def whatsapp_bridge_region # rubocop:disable Style/AccessModifierDeclarations
+    (custom_attributes || {})['whatsapp_bridge_region']
+  end
+
+  public def whatsapp_bridge_country_iso # rubocop:disable Style/AccessModifierDeclarations
+    (custom_attributes || {})['whatsapp_bridge_country_iso']
+  end
+
   def validate_limit_keys
     # method overridden in enterprise module
   end

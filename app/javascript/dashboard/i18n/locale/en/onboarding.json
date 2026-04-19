@@ -2,19 +2,20 @@
   "ONBOARDING": {
     "SKIP": "Skip",
     "COUNTRY_PICKER": {
-      "EYEBROW": "Where should we host your",
-      "TITLE": "WhatsApp number",
-      "SUBTITLE": "Pick the country closest to your audience. We'll spin up a regional server with a residential IP for anti-ban stability.",
-      "CONTINUE": "Continue",
-      "BACK_TO_SIGNIN": "Back to dashboard",
+      "EYEBROW": "Select your home region",
+      "TITLE": "Where should we host your WhatsApp?",
+      "SUBTITLE": "Your number lives on a datacentre closest to you, with a residential IP to protect it from bans. Every WhatsApp inbox on this account is served from the same region.",
+      "PICK_A_COUNTRY": "Pick a country to continue",
+      "CONTINUE_WITH": "Continue with {country}",
+      "CLICK_A_COUNTRY": "Click a country on the map to pick your region",
+      "HOSTING_IN": "Hosting in {country}",
       "COVERED": "{count} countries covered",
       "COMING_SOON": "Coming soon",
-      "TAB_ACTIVE": "Available",
-      "TAB_COMING": "Coming soon",
-      "INACTIVE_NOTICE": "{country} isn't live yet. Join the waitlist and we'll email you the moment we add it.",
-      "JOIN_WAITLIST": "Notify me",
-      "LOADING": "Preparing your regional server…",
-      "RESOLVE_FAILED": "Couldn't reach any server in that region. Try another country.",
+      "STATUS": {
+        "PROVISIONING": "Provisioning your server…",
+        "VERIFYING": "Verifying the connection…"
+      },
+      "RESOLVE_FAILED": "Couldn't reach the server in that region. Try another country or retry in a moment.",
       "COUNTRY_NAMES": {
         "DE": "Germany",
         "FR": "France",

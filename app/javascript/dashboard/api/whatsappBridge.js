@@ -28,6 +28,15 @@ class WhatsAppBridgeAPI extends ApiClient {
     });
   }
 
+  // Liveness probe for a region / freshly-created instance. The country
+  // picker polls this after provisioning to confirm the framework is
+  // reachable before sending the admin to the QR scan step.
+  regionHealth({ regionCode, instanceName = null }) {
+    const params = new URLSearchParams({ region_code: regionCode });
+    if (instanceName) params.append('instance_name', instanceName);
+    return axios.get(`${this.url}/region_health?${params.toString()}`);
+  }
+
   connect(instanceName, pairingPhone = null) {
     const body = pairingPhone ? { pairing_phone: pairingPhone } : {};
     return axios.post(`${this.url}/connect/${instanceName}`, body);

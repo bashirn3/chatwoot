@@ -290,6 +290,7 @@ Rails.application.routes.draw do
           scope :whatsapp_bridge, controller: :whatsapp_bridge do
             get :instances
             get :regions
+            get :region_health
             post :resolve_region
             post :create_instance
             post 'connect/:instance_name', action: :connect

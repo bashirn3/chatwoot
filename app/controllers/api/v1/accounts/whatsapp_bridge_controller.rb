@@ -13,6 +13,37 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
     render json: { success: true, regions: payload }
   end
 
+  # GET /region_health?region_code=de
+  # Lightweight liveness check the onboarding flow polls after selecting
+  # a country — confirms the regional framework is reachable and ready to
+  # host the freshly-created instance. Avoids sending users into the QR
+  # step when the server isn't actually up.
+  def region_health
+    region_code = params[:region_code].to_s.downcase.presence
+    return render(json: { error: 'region_code required' }, status: :bad_request) if region_code.blank?
+
+    instance_name = params[:instance_name].to_s.presence
+    client = WhatsappBridge::RegionalClient.new(region_code)
+    unless client.configured?
+      return render(json: { success: false, status: 'unconfigured', region: region_code }, status: :service_unavailable)
+    end
+
+    path = instance_name ? "/api/instances/#{instance_name}/connection" : '/api/health'
+    response = client.get(path, timeout: 5)
+
+    if response['error'].present?
+      render json: { success: false, status: 'unreachable', region: region_code, detail: response['error'] },
+             status: :bad_gateway
+    else
+      render json: {
+        success: true,
+        region: region_code,
+        status: response['status'] || response['connection'] || 'ok',
+        instance: response['instance']
+      }
+    end
+  end
+
   # POST /resolve_region { country_iso }
   # Resolves a country to a concrete region code, performing the UK
   # tie-break (via each region's /api/proxy/pool) when needed.
@@ -72,9 +103,12 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
 
   # POST /create_instance
   # Body: { instance_name, country_iso?, region_code? }
-  # - country_iso takes precedence (we resolve → region_code including UK tie-break).
-  # - region_code can be provided directly (advanced callers / tests).
-  # - neither → fall back to legacy single-region.
+  # Priority: explicit country_iso (country picker on first onboarding) →
+  # explicit region_code (advanced / tests) → account's stored home region
+  # (set the first time a user creates an inbox) → legacy single-region.
+  #
+  # After creation we persist the resolved country on the account so every
+  # subsequent inbox the user creates defaults to the same regional server.
   def create_instance
     region_code = resolve_requested_region
     return render_region_error if region_code.blank?
@@ -96,6 +130,7 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
     end
 
     inbox.channel.update!(webhook_url: outgoing_webhook_url(scoped_name))
+    persist_account_home_region(region_code, params[:country_iso])
     instance_data = response['instance'] || response
     instance_data['region'] = region_code
     render json: { success: true, instance: instance_data, inbox_id: inbox.id, region_code: region_code }
@@ -200,11 +235,19 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
     end
   end
 
+  # Resolution order:
+  #   1. explicit country_iso (the onboarding country picker sends this)
+  #   2. explicit region_code (tests / advanced API callers)
+  #   3. the account's locked-in home region (every inbox after the first
+  #      onboarding pick goes to the same region — single-region-per-account)
+  #   4. legacy single-region framework
   def resolve_requested_region
     if params[:country_iso].present?
       WhatsappBridge::RegionResolver.new(params[:country_iso]).resolve
     elsif params[:region_code].present?
       params[:region_code].to_s.downcase
+    elsif Current.account.whatsapp_bridge_region.present?
+      Current.account.whatsapp_bridge_region
     else
       legacy_region_code
     end
@@ -212,6 +255,20 @@ class Api::V1::Accounts::WhatsappBridgeController < Api::V1::Accounts::BaseContr
          WhatsappBridge::RegionResolver::TemporarilyUnavailableError => e
     @region_resolve_error = e
     nil
+  end
+
+  # Locks the account's home region the first time an inbox is provisioned.
+  # Stays put afterwards — admins contact support to move regions. Also
+  # records the originally-clicked ISO (for UI display: 'DE', 'GB', etc).
+  def persist_account_home_region(region_code, country_iso)
+    return if region_code.blank?
+    return if region_code == legacy_region_code
+    return if Current.account.whatsapp_bridge_region.present?
+
+    attrs = (Current.account.custom_attributes || {}).dup
+    attrs['whatsapp_bridge_region'] = region_code
+    attrs['whatsapp_bridge_country_iso'] = country_iso.to_s.upcase if country_iso.present?
+    Current.account.update_column(:custom_attributes, attrs)
   end
 
   def render_region_error
