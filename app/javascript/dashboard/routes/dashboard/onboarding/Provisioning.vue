@@ -7,9 +7,10 @@ import WhatsAppBridgeAPI from 'dashboard/api/whatsappBridge';
 import Button from 'dashboard/components-next/button/Button.vue';
 
 // Replace with your production .lottie URL. Falls back to the inline SVG
-// "provisioning" animation below if this is null — the page still looks
-// great without a Lottie, and the SVG respects prefers-reduced-motion.
-const PROVISIONING_LOTTIE_URL = null;
+// "provisioning" animation below if this is null. Swap the embed URL
+// (/embed/<id>/...) for the raw asset URL (no /embed/).
+const PROVISIONING_LOTTIE_URL =
+  'https://lottie.host/aa790431-bd41-488e-b76f-6929f15932c6/1C2ZQ1MrvN.lottie';
 
 const route = useRoute();
 const router = useRouter();
@@ -94,7 +95,7 @@ const pollQrOnce = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   try {
     const raw = sessionStorage.getItem('wasup_provisioning');
     ctx.value = raw ? JSON.parse(raw) : null;
@@ -108,7 +109,16 @@ onMounted(() => {
     return;
   }
 
-  // Kick an immediate poll; then keep polling every 1.5s.
+  // Kick the framework once so it actually generates a QR. Without this
+  // call the regional framework stays idle and /qr returns
+  // "Not yet generated. Call /connect or /pair first.".
+  try {
+    await WhatsAppBridgeAPI.connect(ctx.value.instanceName);
+  } catch (_e) {
+    // framework already connecting — ignore
+  }
+
+  // Then immediate poll + 1.5s interval.
   pollQrOnce();
   pollTimer.value = setInterval(pollQrOnce, 1500);
   elapsedTimer.value = setInterval(() => {
@@ -189,12 +199,9 @@ onBeforeUnmount(() => {
       </p>
     </div>
 
-    <!-- Three-step status ladder -->
-    <ol
-      class="flex flex-col gap-2 text-left text-[13px] w-full max-w-[320px]"
-      aria-live="polite"
-    >
-      <li class="flex items-center gap-2.5">
+    <!-- Three-step status ladder — centered as a unit -->
+    <ol class="flex flex-col gap-2 text-[13px] mx-auto" aria-live="polite">
+      <li class="flex items-center justify-center gap-2.5">
         <span
           class="size-4 rounded-full inline-flex items-center justify-center shrink-0"
           :class="
@@ -220,7 +227,7 @@ onBeforeUnmount(() => {
           {{ $t('ONBOARDING.PROVISIONING.STEPS.CREATED') }}
         </span>
       </li>
-      <li class="flex items-center gap-2.5">
+      <li class="flex items-center justify-center gap-2.5">
         <span
           class="size-4 rounded-full inline-flex items-center justify-center shrink-0"
           :class="
@@ -247,7 +254,7 @@ onBeforeUnmount(() => {
           {{ $t('ONBOARDING.PROVISIONING.STEPS.WAITING_QR') }}
         </span>
       </li>
-      <li class="flex items-center gap-2.5">
+      <li class="flex items-center justify-center gap-2.5">
         <span
           class="size-4 rounded-full inline-flex items-center justify-center shrink-0"
           :class="
