@@ -16,11 +16,11 @@ const accountId = computed(() => route.params.accountId);
 const user = computed(() => store.getters.getCurrentUser || {});
 
 // Mercator projection constants — must match scripts/generate_europe_paths.mjs.
-const VIEW_W = 560;
-const LON_MIN = -12;
-const LON_MAX = 32;
-const LAT_MIN = 34;
-const LAT_MAX = 70;
+const VIEW_W = 1200;
+const LON_MIN = -16;
+const LON_MAX = 38;
+const LAT_MIN = 48;
+const LAT_MAX = 68;
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);
 const MERC_Y_MAX = mercY(LAT_MAX);
@@ -174,9 +174,7 @@ onMounted(loadRegions);
 
 <!-- eslint-disable @intlify/vue-i18n/no-dynamic-keys -->
 <template>
-  <section
-    class="mx-auto w-full max-w-[720px] flex flex-col items-center gap-5 sm:gap-6"
-  >
+  <section class="w-full flex flex-col items-center gap-4 sm:gap-5">
     <!-- Minimal header: eyebrow + title only -->
     <header class="flex flex-col items-center text-center gap-1.5">
       <span
@@ -191,24 +189,25 @@ onMounted(loadRegions);
       </h1>
     </header>
 
-    <!-- Map, transparent. Blends with the page background -->
+    <!-- Hovering / selected country name floats above the map -->
+    <div class="h-5 text-[11px] font-medium uppercase tracking-[0.22em]">
+      <span
+        v-if="displayLabel"
+        class="text-n-slate-12 transition-opacity duration-150"
+      >
+        {{ displayLabel }}
+      </span>
+    </div>
+
+    <!-- Map — breaks out of the shell's left/right padding so it can go
+         edge-to-edge. Transparent so it blends with the onboarding bg. -->
     <div
-      class="relative w-full flex flex-col items-center"
+      class="relative w-[100vw] -mx-[calc((100vw-100%)/2)] flex justify-center"
       :aria-label="displayLabel || $t('ONBOARDING.COUNTRY_PICKER.TITLE')"
     >
-      <!-- Hovering / selected country name floats above the map -->
-      <div class="h-5 mb-1 text-[11px] font-medium uppercase tracking-[0.22em]">
-        <span
-          v-if="displayLabel"
-          class="text-n-slate-12 transition-opacity duration-150"
-        >
-          {{ displayLabel }}
-        </span>
-      </div>
-
       <svg
         :viewBox="EU_MAP_VIEWBOX"
-        class="w-full h-auto max-h-[42vh] sm:max-h-[44vh] select-none"
+        class="w-full max-w-[1400px] h-auto max-h-[48vh] sm:max-h-[52vh] select-none"
         role="img"
         :aria-label="$t('ONBOARDING.COUNTRY_PICKER.TITLE')"
         preserveAspectRatio="xMidYMid meet"

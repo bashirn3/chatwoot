@@ -15,14 +15,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Mercator viewport. Height is derived from the projected latitude range
-// so country shapes come out geographically accurate. VIEW_W kept modest
-// so the resulting ~560×880 aspect fits a compact onboarding card.
-const VIEW_W = 560;
-const LON_MIN = -12;
-const LON_MAX = 32;
-const LAT_MIN = 34;
-const LAT_MAX = 70;
+// Mercator viewport. Bounds trimmed to 46–68°N so the aspect ratio comes
+// out landscape (~1.46:1) — the country picker wants a wide map that
+// features the Nordics / UK / northern Europe prominently, with Germany
+// and France just peeking in at the bottom. Far-northern Finland /
+// southern Italy / southern France fall off-canvas by design.
+const VIEW_W = 1200;
+const LON_MIN = -16;
+const LON_MAX = 38;
+const LAT_MIN = 48;
+const LAT_MAX = 68;
 
 const mercY = deg => Math.log(Math.tan(Math.PI / 4 + (deg * Math.PI) / 360));
 const MERC_Y_MIN = mercY(LAT_MIN);
